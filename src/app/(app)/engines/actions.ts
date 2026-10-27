@@ -26,6 +26,7 @@ export async function saveEngine(_prev: FormState, fd: FormData): Promise<FormSt
     cso: num(fd, "cso"),
     overhaul_interval_hours: num(fd, "overhaul_interval_hours"),
     last_overhaul_date: str(fd, "last_overhaul_date") || null,
+    oil_limit_qph: num(fd, "oil_limit_qph"),
     notes: str(fd, "notes") || null,
     // Installed status is managed by install/remove on the aircraft page.
     ...(id ? {} : { status: str(fd, "status") || "spare" }),

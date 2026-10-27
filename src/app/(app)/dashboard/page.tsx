@@ -4,6 +4,8 @@ import { Donut, EhiGauge, ehiTone } from "@/components/charts";
 import { TrendChart } from "@/components/trend-chart";
 import { Badge, StatusBadge, Table } from "@/components/ui";
 import { AT_RISK_EHI, bandOf, ehiBands, monthlyAverage } from "@/lib/health";
+import { channels } from "@/lib/monitoring";
+import { describe, loadMonitoring, statusByEngine, type MonitorStatus } from "@/lib/monitoring-data";
 import { aircraftStatus, defectSeverity, fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,7 +43,9 @@ export default async function DashboardPage() {
   const since12m = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1)).toISOString().slice(0, 10);
   const since30d = new Date(now.getTime() - 30 * 86_400_000).toISOString().slice(0, 10);
 
-  const [engines, aircraft, defects, assessments, flights] = await Promise.all([
+  const since6m = new Date(now.getTime() - 183 * 86_400_000).toISOString().slice(0, 10);
+
+  const [engines, aircraft, defects, assessments, flights, oilLimits, monitoring] = await Promise.all([
     supabase
       .from("engines")
       .select("id, serial_number, model, status, ehi, tsn, tso, overhaul_interval_hours, engine_installations(removed_at, position, aircraft(registration))")
@@ -55,6 +59,8 @@ export default async function DashboardPage() {
       .returns<DefectRow[]>(),
     supabase.from("ehi_assessments").select("assessed_at, ehi").gte("assessed_at", since12m),
     supabase.from("flight_logs").select("flight_hours").gte("flight_date", since30d),
+    supabase.from("engines").select("id, oil_limit_qph"),
+    loadMonitoring(supabase, { since: since6m }),
   ]);
 
   if (engines.error || aircraft.error || defects.error) return <SetupNotice />;
@@ -85,6 +91,24 @@ export default async function DashboardPage() {
   const fleetTSN = engineRows.reduce((s, e) => s + Number(e.tsn), 0);
 
   const engineHref = (sn: string) => `/engines/${encodeURIComponent(sn)}`;
+  const monitorStatus =
+    monitoring && !oilLimits.error
+      ? statusByEngine(monitoring, new Map((oilLimits.data ?? []).map((r) => [r.id as string, r.oil_limit_qph as number | null])))
+      : new Map<string, MonitorStatus>();
+  const monitorAlerts: Alert[] = engineRows.flatMap((e) => {
+    const s = monitorStatus.get(e.id);
+    if (!s) return [];
+    return channels.flatMap((c) => {
+      const level = s[c.key]?.level;
+      if (!level || level === "normal") return [];
+      return [{
+        level: level === "alert" ? "critical" : "warning",
+        title: `${e.serial_number} — ${describe(c.key, s)}`,
+        detail: `${location(e)} · ${c.label}`,
+        href: `${engineHref(e.serial_number)}?tab=monitoring`,
+      } satisfies Alert];
+    });
+  });
   const alerts: Alert[] = [
     ...atRisk.map((e) => ({
       level: (e.ehi < 45 ? "critical" : "warning") as Alert["level"],
@@ -92,6 +116,7 @@ export default async function DashboardPage() {
       detail: `${location(e)} · ${e.ehi < 45 ? "Immediate engineering review" : "Monitor closely"}`,
       href: `${engineHref(e.serial_number)}?tab=health`,
     })),
+    ...monitorAlerts,
     ...openDefects.map((d) => ({
       level: (d.severity === "critical" ? "critical" : d.severity === "major" ? "warning" : "info") as Alert["level"],
       title: d.description,

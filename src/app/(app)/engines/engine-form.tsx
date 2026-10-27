@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Field, FormMessage, SelectField, SubmitButton, TextArea, type FormState } from "@/components/form";
+import { DEFAULT_OIL_LIMIT_QPH } from "@/lib/monitoring";
 import { engineStatus } from "@/lib/status";
 import { saveEngine } from "./actions";
 
@@ -16,6 +17,7 @@ export type EngineDefaults = {
   cso?: number | null;
   overhaul_interval_hours?: number | null;
   last_overhaul_date?: string | null;
+  oil_limit_qph?: number | null;
   notes?: string | null;
 };
 
@@ -46,6 +48,19 @@ export function EngineForm({ defaults = {} }: { defaults?: EngineDefaults }) {
         <Field label="CSO — cycles since overhaul" name="cso" type="number" min={0} defaultValue={defaults.cso ?? ""} />
         <Field label="Overhaul interval (FH)" name="overhaul_interval_hours" type="number" step="0.1" min={1} defaultValue={defaults.overhaul_interval_hours ?? ""} />
         <Field label="Last overhaul date" name="last_overhaul_date" type="date" defaultValue={defaults.last_overhaul_date ?? ""} />
+      </Section>
+
+      <Section title="Monitoring limits">
+        <Field
+          label="Oil consumption limit (US qt/FH)"
+          name="oil_limit_qph"
+          type="number"
+          step="0.01"
+          min={0.01}
+          defaultValue={defaults.oil_limit_qph ?? ""}
+          placeholder={String(DEFAULT_OIL_LIMIT_QPH)}
+          hint={`From the engine maintenance manual. Blank = fleet default ${DEFAULT_OIL_LIMIT_QPH} qt/FH.`}
+        />
       </Section>
 
       <Section title="Notes">

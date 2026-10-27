@@ -13,6 +13,9 @@
   --success: #3ddc84;
   --warning: #ffb020;
   --danger: #ff4d5e;
+  /* Dark native controls: scrollbars, date pickers, selects. */
+  color-scheme: dark;
+  scrollbar-color: var(--surface-2) transparent;
 }
 
 @theme inline {

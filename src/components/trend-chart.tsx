@@ -5,7 +5,7 @@ import { useState } from "react";
 export type TrendPoint = { label: string; value: number | null; detail?: string };
 
 /**
- * Single-series line chart on a 0–100 scale with an optional threshold line,
+ * Single-series line chart on a 0–max scale (default 100) with an optional threshold line,
  * crosshair and tooltip. One series, so the panel title names it — no legend.
  */
 export function TrendChart({
@@ -14,12 +14,14 @@ export function TrendChart({
   thresholdLabel,
   height = 220,
   unit = "",
+  max = 100,
 }: {
   points: TrendPoint[];
   threshold?: number;
   thresholdLabel?: string;
   height?: number;
   unit?: string;
+  max?: number;
 }) {
   const [hover, setHover] = useState<number | null>(null);
   const W = 640;
@@ -28,7 +30,7 @@ export function TrendChart({
   const iw = W - pad.l - pad.r;
   const ih = H - pad.t - pad.b;
   const x = (i: number) => pad.l + (points.length <= 1 ? iw / 2 : (i / (points.length - 1)) * iw);
-  const y = (v: number) => pad.t + ih - (v / 100) * ih;
+  const y = (v: number) => pad.t + ih - (Math.min(v, max) / max) * ih;
 
   // Break the line where a month has no data instead of drawing through it.
   const segments: string[] = [];
@@ -60,11 +62,11 @@ export function TrendChart({
           setHover(Math.max(0, Math.min(points.length - 1, i)));
         }}
       >
-        {[0, 25, 50, 75, 100].map((t) => (
+        {[0, 0.25, 0.5, 0.75, 1].map((f) => f * max).map((t) => (
           <g key={t}>
             <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth="1" />
             <text x={pad.l - 8} y={y(t) + 3.5} textAnchor="end" fontSize="10" fill="var(--muted)" className="font-mono">
-              {t}
+              {Number(t.toFixed(2))}
             </text>
           </g>
         ))}

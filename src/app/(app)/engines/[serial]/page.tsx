@@ -9,10 +9,15 @@ import { createClient } from "@/lib/supabase/server";
 import { TrendChart } from "@/components/trend-chart";
 import { AT_RISK_EHI, ehiComponents, type Assessment } from "@/lib/health";
 import { AssessmentForm } from "../assessment-form";
+import { DEFAULT_OIL_LIMIT_QPH, channels, monitorLevel, oilLevel } from "@/lib/monitoring";
+import { loadMonitoring, statusByEngine, type MonitoringData, type MonitorStatus } from "@/lib/monitoring-data";
+import { BorescopeForm, ChipCheckForm, OilSampleForm, OilUpliftForm } from "../../health/forms";
+import { BorescopeTable, ChipTable, OilTable, SoapTable } from "../../health/records";
 
 const tabs = [
   { key: "overview", label: "Overview" },
   { key: "health", label: "Health" },
+  { key: "monitoring", label: "Monitoring" },
   { key: "configuration", label: "Configuration" },
   { key: "defects", label: "Defects" },
   { key: "timeline", label: "Timeline" },
@@ -48,7 +53,7 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
   const { data: e } = await supabase.from("engines").select("*").eq("serial_number", serial).maybeSingle();
   if (!e) notFound();
 
-  const [installsRes, defectsRes, assessmentsRes] = await Promise.all([
+  const [installsRes, defectsRes, assessmentsRes, monitoring] = await Promise.all([
     supabase
       .from("engine_installations")
       .select("id, position, installed_at, removed_at, removal_reason, aircraft(registration, aircraft_type)")
@@ -68,12 +73,15 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
       .order("assessed_at", { ascending: false })
       .order("created_at", { ascending: false })
       .returns<Assessment[]>(),
+    loadMonitoring(supabase, { engineId: e.id }),
   ]);
   const installs = installsRes.data ?? [];
   const defects = defectsRes.data ?? [];
   const assessments = assessmentsRes.data ?? [];
   const latest = assessments[0];
   const editable = canEdit(user.role);
+  const today = new Date().toISOString().slice(0, 10);
+  const monitor = monitoring ? statusByEngine(monitoring, new Map([[e.id, e.oil_limit_qph]])).get(e.id) : undefined;
 
   const current = installs.find((i) => !i.removed_at);
   const tone = ehiTone(e.ehi);
@@ -192,6 +200,11 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
               <div className="flex justify-between"><span className="text-muted">Open defects</span><span className="font-mono">{openDefects.length}</span></div>
               <div className="flex justify-between"><span className="text-muted">Installations</span><span className="font-mono">{installs.length}</span></div>
             </div>
+            {monitoring && (
+              <div className="mt-6 border-t border-border pt-5">
+                <ChannelSummary monitor={monitor} />
+              </div>
+            )}
             <div className="mt-6 border-t border-border pt-5">
               <ComponentBars assessment={latest} />
             </div>
@@ -257,13 +270,23 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
             {editable && (
               <section className="panel rounded-2xl p-6">
                 <p className="label mb-5">Record health assessment</p>
-                <AssessmentForm engineId={e.id} today={new Date().toISOString().slice(0, 10)}
+                <AssessmentForm engineId={e.id} today={today}
                   latest={latest && Object.fromEntries(ehiComponents.map((c) => [c.key, latest[c.key]]))}
                 />
               </section>
             )}
           </div>
         </div>
+      )}
+
+      {tab === "monitoring" && !monitoring && (
+        <section className="panel rounded-2xl p-8 text-sm text-muted">
+          Run <code className="text-gold-soft">0004_health_monitoring.sql</code> in the Supabase SQL Editor to enable health monitoring.
+        </section>
+      )}
+
+      {tab === "monitoring" && monitoring && (
+        <MonitoringTab engineId={e.id} limit={e.oil_limit_qph} data={monitoring} monitor={monitor} editable={editable} today={today} />
       )}
 
       {tab === "configuration" && (
@@ -344,6 +367,113 @@ function ComponentBars({ assessment }: { assessment?: Assessment }) {
         {assessment.assessed_at} · {assessment.source ?? "Assessment"}
       </p>
     </div>
+  );
+}
+
+function ChannelSummary({ monitor }: { monitor?: MonitorStatus }) {
+  return (
+    <div className="space-y-2.5 text-sm">
+      {channels.map((c) => {
+        const level = monitor?.[c.key]?.level;
+        return (
+          <div key={c.key} className="flex items-center justify-between">
+            <span className="text-muted">{c.label}</span>
+            {level ? <StatusBadge map={monitorLevel} value={level} /> : <span className="text-xs text-muted">No data</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function MonitoringTab({
+  engineId,
+  limit,
+  data,
+  monitor,
+  editable,
+  today,
+}: {
+  engineId: string;
+  limit: number | null;
+  data: MonitoringData;
+  monitor?: MonitorStatus;
+  editable: boolean;
+  today: string;
+}) {
+  const oilLimit = Number(limit ?? DEFAULT_OIL_LIMIT_QPH);
+  const oilPoints = data.oil.slice(0, 24).reverse();
+  const top = Math.max(oilLimit * 1.5, ...oilPoints.map((o) => Number(o.rate_qph) * 1.1));
+  const limits = new Map([[engineId, limit]]);
+  const forms = [
+    { key: "oil", label: "Record oil uplift", form: <OilUpliftForm engineId={engineId} limit={limit} today={today} /> },
+    { key: "soap", label: "Record oil sample (SOAP)", form: <OilSampleForm engineId={engineId} today={today} /> },
+    { key: "chip", label: "Record chip detector check", form: <ChipCheckForm engineId={engineId} today={today} /> },
+    { key: "borescope", label: "Record borescope inspection", form: <BorescopeForm engineId={engineId} today={today} /> },
+  ];
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-3">
+      <div className="min-w-0 space-y-6 lg:col-span-2">
+        <section className="panel rounded-2xl p-6">
+          <div className="flex items-end justify-between">
+            <p className="label">Oil consumption (qt/FH)</p>
+            <p className="font-mono text-xs text-muted">
+              Limit {oilLimit} qt/FH{limit == null ? " (default)" : ""}
+            </p>
+          </div>
+          <div className="mt-4">
+            {oilPoints.length === 0 ? (
+              <p className="py-12 text-center text-sm text-muted">No oil uplifts recorded yet.</p>
+            ) : (
+              <TrendChart
+                max={Math.ceil(top * 5) / 5}
+                threshold={oilLimit}
+                thresholdLabel={`Limit ${oilLimit}`}
+                unit=" qt/FH"
+                points={oilPoints.map((o) => ({
+                  label: shortDate(o.serviced_at),
+                  value: Number(o.rate_qph),
+                  detail: `${Number(o.quantity_qt).toFixed(1)} qt over ${Number(o.flight_hours).toFixed(1)} FH · ${monitorLevel[oilLevel(Number(o.rate_qph), limit)].label}`,
+                }))}
+              />
+            )}
+          </div>
+        </section>
+
+        <RecordPanel title="Oil uplifts"><OilTable rows={data.oil.slice(0, 12)} limits={limits} /></RecordPanel>
+        <RecordPanel title="Oil analysis (SOAP)"><SoapTable rows={data.soap.slice(0, 12)} /></RecordPanel>
+        <RecordPanel title="Chip detector checks"><ChipTable rows={data.chip.slice(0, 12)} /></RecordPanel>
+        <RecordPanel title="Borescope inspections"><BorescopeTable rows={data.borescope.slice(0, 12)} /></RecordPanel>
+      </div>
+
+      <div className="space-y-6">
+        <section className="panel rounded-2xl p-6">
+          <p className="label mb-4">Latest result per channel</p>
+          <ChannelSummary monitor={monitor} />
+          <p className="mt-5 border-t border-border pt-4 text-xs text-muted">
+            Use these findings when scoring the next health assessment on the Health tab.
+          </p>
+        </section>
+
+        {editable &&
+          forms.map((f) => (
+            <details key={f.key} className="panel group rounded-2xl p-6">
+              <summary className="label cursor-pointer list-none hover:!text-gold-soft group-open:mb-5">+ {f.label}</summary>
+              {f.form}
+            </details>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+function RecordPanel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="panel overflow-hidden rounded-2xl">
+      <p className="label px-6 pt-6">{title}</p>
+      <div className="mt-3">{children}</div>
+    </section>
   );
 }
 
