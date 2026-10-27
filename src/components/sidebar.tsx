@@ -36,7 +36,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-border px-5 py-4 font-mono text-[10px] tracking-widest text-muted">
-        v0.4 · HEALTH MONITORING
+        v0.5 · DEFECTS &amp; RELIABILITY
       </div>
     </aside>
   );

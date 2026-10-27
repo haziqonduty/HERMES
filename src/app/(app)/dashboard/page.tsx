@@ -121,7 +121,7 @@ export default async function DashboardPage() {
       level: (d.severity === "critical" ? "critical" : d.severity === "major" ? "warning" : "info") as Alert["level"],
       title: d.description,
       detail: [d.aircraft?.registration, d.engines?.serial_number, d.reported_at].filter(Boolean).join(" · "),
-      href: d.engines ? `${engineHref(d.engines.serial_number)}?tab=defects` : d.aircraft ? `/fleet/${encodeURIComponent(d.aircraft.registration)}` : "/defects",
+      href: `/defects/${d.id}`,
     })),
     ...overhaulSoon.map((e) => ({
       level: "warning" as const,
@@ -317,6 +317,9 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-2 px-6 pt-6">
           <Wrench size={14} className="text-gold" />
           <p className="label">Open defects</p>
+          <Link href="/defects" className="ml-auto font-mono text-[11px] tracking-widest text-accent hover:underline">
+            ALL DEFECTS →
+          </Link>
         </div>
         <div className="mt-3">
           <Table
@@ -332,7 +335,7 @@ export default async function DashboardPage() {
               ) : (
                 <span key="e" className="text-muted">—</span>
               ),
-              d.description,
+              <Link key="d" href={`/defects/${d.id}`} className="hover:text-gold-soft">{d.description}</Link>,
               <StatusBadge key="s" map={defectSeverity} value={d.severity} />,
             ])}
           />

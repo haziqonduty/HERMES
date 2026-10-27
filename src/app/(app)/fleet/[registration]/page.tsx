@@ -158,14 +158,21 @@ export default async function AircraftPage({ params }: PageProps<"/fleet/[regist
       </div>
 
       <section className="panel overflow-hidden rounded-2xl">
-        <p className="label px-6 pt-6">Open defects</p>
+        <div className="flex items-center justify-between px-6 pt-6">
+          <p className="label">Open defects</p>
+          {editable && (
+            <Link href={`/defects/new?aircraft=${encodeURIComponent(a.registration)}`} className="font-mono text-[11px] tracking-widest text-accent hover:underline">
+              + RAISE DEFECT
+            </Link>
+          )}
+        </div>
         <div className="mt-3">
           <Table
             head={["Reported", "Description", "Severity", "Status"]}
             empty="No open defects on this aircraft."
             rows={(defects.data ?? []).map((d) => [
               <span key="r" className="font-mono text-muted">{d.reported_at}</span>,
-              d.description,
+              <Link key="d" href={`/defects/${d.id}`} className="hover:text-gold-soft">{d.description}</Link>,
               <StatusBadge key="s" map={defectSeverity} value={d.severity} />,
               <StatusBadge key="t" map={defectStatus} value={d.status} />,
             ])}

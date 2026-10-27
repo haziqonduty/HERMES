@@ -88,6 +88,9 @@ export async function removeEngine(_prev: FormState, fd: FormData): Promise<Form
     p_date: str(fd, "date"),
     p_reason: reason,
     p_engine_status: str(fd, "engine_status"),
+    p_removal_type: str(fd, "removal_type") || "unscheduled",
+    p_failure_mode: str(fd, "failure_mode") || null,
+    p_confirmed_failure: fd.get("confirmed_failure") === "on",
   });
 
   if (error) return { error: friendlyError(error) };

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Hammer } from "lucide-react";
 import { navItems } from "@/lib/nav";
 
-const BUILT = new Set(["dashboard", "fleet", "engines", "health"]);
+const BUILT = new Set(["dashboard", "fleet", "engines", "health", "defects", "reliability"]);
 
 export function generateStaticParams() {
   return navItems.filter((i) => !BUILT.has(i.slug)).map((i) => ({ module: i.slug }));

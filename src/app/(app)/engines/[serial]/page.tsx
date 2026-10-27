@@ -315,7 +315,14 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
 
       {tab === "defects" && (
         <section className="panel overflow-hidden rounded-2xl">
-          <p className="label px-6 pt-6">Defect history</p>
+          <div className="flex items-center justify-between px-6 pt-6">
+            <p className="label">Defect history</p>
+            {editable && (
+              <Link href={`/defects/new?engine=${encodeURIComponent(e.serial_number)}`} className="font-mono text-[11px] tracking-widest text-accent hover:underline">
+                + RAISE DEFECT
+              </Link>
+            )}
+          </div>
           <div className="mt-3">
             <Table
               head={["Reported", "ATA", "System", "Description", "Severity", "Status"]}
@@ -324,7 +331,7 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
                 <span key="r" className="font-mono text-muted">{d.reported_at}</span>,
                 <span key="a" className="font-mono">{d.ata_chapter ?? "—"}</span>,
                 d.system ?? "—",
-                d.description,
+                <Link key="d" href={`/defects/${d.id}`} className="hover:text-gold-soft">{d.description}</Link>,
                 <StatusBadge key="s" map={defectSeverity} value={d.severity} />,
                 <StatusBadge key="t" map={defectStatus} value={d.status} />,
               ])}

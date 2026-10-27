@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Field, FormMessage, SelectField, SubmitButton, type FormState } from "@/components/form";
+import { failureModes } from "@/lib/defects";
 import { aircraftStatus, engineStatus } from "@/lib/status";
 import { installEngine, logFlight, removeEngine, saveAircraft } from "./actions";
 
@@ -105,10 +106,35 @@ export function InstallForm({
 export function RemoveForm({ installationId, today }: { installationId: string; today: string }) {
   const [state, action] = useActionState<FormState, FormData>(removeEngine, {});
   const statusOptions = toOptions(engineStatus).filter((o) => o.value !== "installed");
+  const [type, setType] = useState("unscheduled");
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="installation_id" value={installationId} />
       <Field label="Removal date" name="date" type="date" required defaultValue={today} max={today} />
+      <SelectField
+        label="Removal type"
+        name="removal_type"
+        value={type}
+        onChange={(e) => setType(e.target.value)}
+        options={[
+          { value: "unscheduled", label: "Unscheduled (fault / finding)" },
+          { value: "scheduled", label: "Scheduled (hard time, campaign)" },
+        ]}
+        hint="Drives MTBUR / MTBF in Reliability Analytics"
+      />
+      {type === "unscheduled" && (
+        <>
+          <SelectField
+            label="Failure mode"
+            name="failure_mode"
+            options={[{ value: "", label: "Not yet classified" }, ...failureModes.map((m) => ({ value: m, label: m }))]}
+          />
+          <label className="flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" name="confirmed_failure" className="accent-[var(--gold)]" />
+            Failure confirmed (counts towards MTBF)
+          </label>
+        </>
+      )}
       <Field label="Reason" name="reason" required placeholder="e.g. Chip detector finding, scheduled overhaul" />
       <SelectField label="Engine goes to" name="engine_status" defaultValue="unserviceable" options={statusOptions} />
       <FormMessage state={state} />
