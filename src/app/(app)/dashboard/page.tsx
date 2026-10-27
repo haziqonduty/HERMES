@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Database, Gauge, ShieldAlert, Wrench } from "lucide-react";
 import { Donut, EhiGauge, ehiTone } from "@/components/charts";
+import { Badge, StatusBadge, Table } from "@/components/ui";
+import { defectSeverity } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Executive Dashboard · Hermes" };
@@ -56,13 +58,31 @@ export default async function DashboardPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Kpi label="Total engines" value={engineRows.length} hint="Tracked in HERMES" icon={<Gauge size={18} />} />
-        <Kpi label="Mission ready" value={`${readyPct}${aircraftRows.length ? "%" : ""}`} hint={`${ready} / ${aircraftRows.length} aircraft`} tone="text-success" icon={<CheckCircle2 size={18} />} />
+        <Kpi
+          label="Mission ready"
+          value={`${readyPct}${aircraftRows.length ? "%" : ""}`}
+          hint={`${ready} / ${aircraftRows.length} aircraft`}
+          tone="text-success"
+          icon={<CheckCircle2 size={18} />}
+        />
         <div className="panel flex flex-col items-center justify-center rounded-2xl p-4">
           <p className="label self-start">Engine Health Index (avg)</p>
           <EhiGauge value={avgEhi} />
         </div>
-        <Kpi label="Engines at risk" value={atRisk.length} hint={`EHI below ${AT_RISK_EHI}`} tone="text-warning" icon={<AlertTriangle size={18} />} />
-        <Kpi label="Open defects" value={openDefects.length} hint={`${overhaulSoon.length} engine(s) ≤200 FH to overhaul`} tone="text-danger" icon={<ShieldAlert size={18} />} />
+        <Kpi
+          label="Engines at risk"
+          value={atRisk.length}
+          hint={`EHI below ${AT_RISK_EHI}`}
+          tone="text-warning"
+          icon={<AlertTriangle size={18} />}
+        />
+        <Kpi
+          label="Open defects"
+          value={openDefects.length}
+          hint={`${overhaulSoon.length} engine(s) ≤200 FH to overhaul`}
+          tone="text-danger"
+          icon={<ShieldAlert size={18} />}
+        />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
@@ -82,7 +102,9 @@ export default async function DashboardPage() {
                 <li key={s.key} className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
                   <span className="text-muted">{s.label}</span>
-                  <span className="ml-auto pl-4 font-mono">{aircraftRows.filter((a) => a.status === s.key).length}</span>
+                  <span className="ml-auto pl-4 font-mono">
+                    {aircraftRows.filter((a) => a.status === s.key).length}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -96,20 +118,34 @@ export default async function DashboardPage() {
               HEALTH MONITORING →
             </Link>
           </div>
-          <Table
-            head={["Engine S/N", "Model", "EHI", "TSO (FH)", "Status"]}
-            empty="No engines below the risk threshold."
-            rows={atRisk.slice(0, 5).map((e) => {
-              const tone = ehiTone(e.ehi);
-              return [
-                <span key="sn" className="font-mono">{e.serial_number}</span>,
-                e.model,
-                <span key="ehi" className="font-mono" style={{ color: tone.color }}>{e.ehi}</span>,
-                <span key="tso" className="font-mono text-muted">{e.tso ?? "—"}</span>,
-                <Badge key="st" color={tone.color}>{tone.label}</Badge>,
-              ];
-            })}
-          />
+          <div className="mt-3">
+            <Table
+              head={["Engine S/N", "Model", "EHI", "TSO (FH)", "Status"]}
+              empty="No engines below the risk threshold."
+              rows={atRisk.slice(0, 5).map((e) => {
+                const tone = ehiTone(e.ehi);
+                return [
+                  <Link
+                    key="sn"
+                    href={`/engines/${encodeURIComponent(e.serial_number)}`}
+                    className="font-mono hover:text-gold-soft"
+                  >
+                    {e.serial_number}
+                  </Link>,
+                  e.model,
+                  <span key="ehi" className="font-mono" style={{ color: tone.color }}>
+                    {e.ehi}
+                  </span>,
+                  <span key="tso" className="font-mono text-muted">
+                    {e.tso ?? "—"}
+                  </span>,
+                  <Badge key="st" color={tone.color}>
+                    {tone.label}
+                  </Badge>,
+                ];
+              })}
+            />
+          </div>
         </div>
       </section>
 
@@ -118,17 +154,25 @@ export default async function DashboardPage() {
           <Wrench size={14} className="text-gold" />
           <p className="label">Open defects</p>
         </div>
-        <Table
-          head={["Reported", "Aircraft", "Engine", "Description", "Severity"]}
-          empty="No open defects."
-          rows={openDefects.slice(0, 6).map((d) => [
-            <span key="d" className="font-mono text-muted">{d.reported_at}</span>,
-            <span key="a" className="font-mono">{one(d.aircraft)?.registration ?? "—"}</span>,
-            <span key="e" className="font-mono">{one(d.engines)?.serial_number ?? "—"}</span>,
-            d.description,
-            <Badge key="s" color={severityColor[d.severity] ?? "var(--muted)"}>{d.severity}</Badge>,
-          ])}
-        />
+        <div className="mt-3">
+          <Table
+            head={["Reported", "Aircraft", "Engine", "Description", "Severity"]}
+            empty="No open defects."
+            rows={openDefects.slice(0, 6).map((d) => [
+              <span key="d" className="font-mono text-muted">
+                {d.reported_at}
+              </span>,
+              <span key="a" className="font-mono">
+                {one(d.aircraft)?.registration ?? "—"}
+              </span>,
+              <span key="e" className="font-mono">
+                {one(d.engines)?.serial_number ?? "—"}
+              </span>,
+              d.description,
+              <StatusBadge key="s" map={defectSeverity} value={d.severity} />,
+            ])}
+          />
+        </div>
       </section>
     </div>
   );
@@ -139,13 +183,19 @@ function one<T>(rel: T | T[] | null): T | null {
   return Array.isArray(rel) ? (rel[0] ?? null) : rel;
 }
 
-const severityColor: Record<string, string> = {
-  critical: "var(--danger)",
-  major: "var(--warning)",
-  minor: "var(--accent)",
-};
-
-function Kpi({ label, value, hint, icon, tone = "text-foreground" }: { label: string; value: string | number; hint: string; icon: React.ReactNode; tone?: string }) {
+function Kpi({
+  label,
+  value,
+  hint,
+  icon,
+  tone = "text-foreground",
+}: {
+  label: string;
+  value: string | number;
+  hint: string;
+  icon: React.ReactNode;
+  tone?: string;
+}) {
   return (
     <div className="panel rounded-2xl p-5">
       <div className="flex items-start justify-between">
@@ -158,56 +208,14 @@ function Kpi({ label, value, hint, icon, tone = "text-foreground" }: { label: st
   );
 }
 
-function Badge({ color, children }: { color: string; children: React.ReactNode }) {
-  return (
-    <span
-      className="rounded-full px-2.5 py-1 text-xs capitalize ring-1"
-      style={{ color, background: `color-mix(in srgb, ${color} 12%, transparent)`, boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${color} 35%, transparent)` }}
-    >
-      {children}
-    </span>
-  );
-}
-
-function Table({ head, rows, empty }: { head: string[]; rows: React.ReactNode[][]; empty: string }) {
-  return (
-    <div className="mt-4 overflow-x-auto">
-      <table className="w-full text-left text-sm">
-        <thead className="label">
-          <tr>
-            {head.map((h) => (
-              <th key={h} className="px-6 py-2 font-normal">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
-            <tr className="border-t border-border">
-              <td colSpan={head.length} className="px-6 py-6 text-center text-muted">{empty}</td>
-            </tr>
-          ) : (
-            rows.map((r, i) => (
-              <tr key={i} className="border-t border-border transition hover:bg-surface-2/60">
-                {r.map((c, j) => (
-                  <td key={j} className="px-6 py-3">{c}</td>
-                ))}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 function SetupNotice() {
   return (
     <div className="panel mx-auto max-w-2xl rounded-2xl p-8">
       <Database className="text-gold" />
       <h1 className="mt-4 text-xl font-medium">Database not initialised</h1>
       <p className="mt-2 text-sm text-muted">
-        Run <code className="text-gold-soft">supabase/migrations/0001_foundation.sql</code> in the Supabase SQL Editor, then
-        refresh this page.
+        Run <code className="text-gold-soft">supabase/migrations/0001_foundation.sql</code> in the Supabase SQL Editor,
+        then refresh this page.
       </p>
     </div>
   );

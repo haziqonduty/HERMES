@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 
 export type CurrentUser = { id: string; name: string; role: string };
 
+const EDIT_ROLES = new Set(["admin", "oc_engineering", "supervisor", "planner", "engineer"]);
+
+/** Mirrors public.can_edit_engineering() in the database. UI hint only — RLS is the real guard. */
+export const canEdit = (role: string) => EDIT_ROLES.has(role);
+
 /** Signed-in user with their HERMES profile. Must be called inside a <Suspense> boundary. */
 export async function getCurrentUser(): Promise<CurrentUser> {
   const supabase = await createClient();

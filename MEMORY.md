@@ -18,6 +18,7 @@ Auto-maintained by Caryn. Read before every session. Newest entries at the top o
 - Visual style in posters: deep navy panels, gold/amber headings + gold winged "H" logo, cyan/blue data accents, green/amber/red status. Current site uses cyan/violet — should move to navy + gold.
 
 ## Built (log)
+- 2026-10-27 — **Step 2 Fleet & Engine Passport done.** Migration `0002_fleet_configuration.sql` (adds `aircraft.engine_positions`; RPCs `install_engine` / `remove_engine`; `flight_logs` trigger rolls hours/cycles up to aircraft + engines installed on the flight date). Pages: `/fleet` (cards, search, status chips), `/fleet/new`, `/fleet/[registration]` (engine positions with install/remove, flight log form, open defects, removal history), `/fleet/[registration]/edit`, `/engines` (table, search/status/sort), `/engines/new`, `/engines/[serial]` passport (tabs: overview, configuration, defects, timeline via `?tab=`), `/engines/[serial]/edit`. Shared: `components/ui.tsx` (PageHeader, Badge, StatusBadge, Table, Chip, ButtonLink, Stat), `components/form.tsx` (Field, SelectField, TextArea, SubmitButton, FormMessage), `lib/status.ts` (status label/colour maps, fmtHours), `lib/db-errors.ts` (friendlyError), `canEdit(role)` in `lib/auth.ts`. Server actions call `refresh()` from `next/cache` to update the page.
 - 2026-10-27 — **Step 1 Foundation done.** Navy + gold design tokens (`globals.css`: `.panel`, `.label`, `.text-gold-gradient`), winged-H logo (`components/logo.tsx`), landing page, `/login` (Supabase email+password, server actions), auth `proxy.ts` (all routes except `/` and `/login` require sign-in), app shell `(app)/layout.tsx` with sidebar + mobile nav + topbar, Executive Dashboard (`/dashboard`) reading live Supabase data, placeholder page `(app)/[module]` for unbuilt modules (nav config in `lib/nav.ts`). SQL: `supabase/migrations/0001_foundation.sql` (roles enum, profiles, aircraft, engines, engine_installations, flight_logs, defects, audit_log + RLS) and `supabase/seed.sql` (sample 6× C-130H, 27× T56 engines, 5 defects).
 - 2026-10-27 — Scaffolded Next.js 16 app (TS, Tailwind v4, ESLint, App Router, `src/`). Added Supabase browser/server clients, `.env.example`, premium dark design tokens, and a landing/dashboard shell page. Initialised local git repo.
 
@@ -37,13 +38,17 @@ Auto-maintained by Caryn. Read before every session. Newest entries at the top o
 
 ## Open items
 - Database schema: ask user what Hermes must track (aircraft, maintenance, documents, users…).
-- Supabase: user must run `0001_foundation.sql` (+ optional `seed.sql`) in SQL Editor, create first user in Auth, and promote to admin. Not confirmed yet.
+- Supabase: `0001_foundation.sql` + `seed.sql` run and admin user created — confirmed by user 2026-10-27. Migrations are applied by the USER pasting into SQL Editor (I have no DB access); always tell them which new file to run.
+- Vercel live URL still not recorded.
 - Fleet scope: user said don't fix to one fleet (2026-10-27) — keep aircraft/engine types generic.
-- Next: Step 2 — Fleet Overview + Engine Digital Passport/Configuration.
+- User must run `0002_fleet_configuration.sql` (pushed 2026-10-27) — /fleet errors until then. Not yet confirmed.
+- Step 2 pages not yet verified logged-in by user (I can't sign in).
+- Next: Step 3 — Executive Dashboard upgrade + Engine Health Index (trends/charts), then Step 4 Health Monitoring (oil, chip detector, borescope, component health).
 - Vercel: repo imported and both Supabase env vars added (Config type, all environments) on 2026-10-27. Live URL not yet recorded — ask user.
 
 ## Mistakes & lessons
 - 2026-10-27 — Next.js 16 here has **Cache Components on by default**: any `cookies()`/`searchParams`/DB read or `usePathname`/`useSearchParams` on a dynamic route must sit inside `<Suspense>`, else the build fails. Pattern used: layout shell is static; user info + `{children}` stream in Suspense; dynamic `[module]` route uses `generateStaticParams`. Always run `npm run build` before committing.
 - 2026-10-27 — `middleware.ts` is now `proxy.ts` (export `proxy`).
+- 2026-10-27 — `usePathname()` on a dynamic route also needs Suspense under Cache Components; sidebar uses a `WithPathname` render-prop wrapper with an unhighlighted fallback.
 - 2026-10-27 — First logo draft read as "W" (V-shaped crossbar + beacon). Check logo/visual work with a headless Edge screenshot (`msedge --headless=new --screenshot=...`) before shipping.
 - When a page needs a user's account to view (dashboard), I can't log in myself — ask the user to verify.

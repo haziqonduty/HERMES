@@ -37,7 +37,7 @@ export const navGroups: NavGroup[] = [
     title: "Engineering",
     items: [
       { slug: "fleet", label: "Fleet Overview", icon: Plane, step: 2, description: "Aircraft, installed engines and serviceability." },
-      { slug: "engines", label: "Engine Passport", icon: Gauge, step: 2, description: "Complete digital identity and life history of every engine." },
+      { slug: "engines", label: "Engines & Passport", icon: Gauge, step: 2, description: "Complete digital identity and life history of every engine." },
       { slug: "health", label: "Health Monitoring", icon: Activity, step: 4, description: "Engine Health Index, oil consumption, chip detector and borescope findings." },
       { slug: "defects", label: "Defect Management", icon: ShieldAlert, step: 5, description: "Record, classify and track defects to closure." },
       { slug: "reliability", label: "Reliability Analytics", icon: BarChart3, step: 5, description: "MTBF, MTBUR, failure-mode Pareto and removal trends." },
