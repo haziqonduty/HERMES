@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+:root {
+  --background: #05070d;
+  --surface: #0b1020;
+  --surface-2: #111830;
+  --border: rgba(148, 178, 255, 0.12);
+  --foreground: #e6ecff;
+  --muted: #8a96b8;
+  --accent: #38e1ff;
+  --accent-2: #7c5cff;
+  --success: #3ddc97;
+  --warning: #ffb547;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Blueprint grid backdrop */
+.bg-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 30%, transparent 75%);
+}
+
+.glass {
+  background: linear-gradient(180deg, rgba(17, 24, 48, 0.72), rgba(11, 16, 32, 0.55));
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #ffffff 0%, var(--accent) 55%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
