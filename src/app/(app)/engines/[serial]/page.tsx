@@ -6,9 +6,13 @@ import { ButtonLink, Stat, StatusBadge, Table } from "@/components/ui";
 import { canEdit, getCurrentUser } from "@/lib/auth";
 import { defectSeverity, defectStatus, engineStatus, fmtHours, fmtInt } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { TrendChart } from "@/components/trend-chart";
+import { AT_RISK_EHI, ehiComponents, type Assessment } from "@/lib/health";
+import { AssessmentForm } from "../assessment-form";
 
 const tabs = [
   { key: "overview", label: "Overview" },
+  { key: "health", label: "Health" },
   { key: "configuration", label: "Configuration" },
   { key: "defects", label: "Defects" },
   { key: "timeline", label: "Timeline" },
@@ -44,7 +48,7 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
   const { data: e } = await supabase.from("engines").select("*").eq("serial_number", serial).maybeSingle();
   if (!e) notFound();
 
-  const [installsRes, defectsRes] = await Promise.all([
+  const [installsRes, defectsRes, assessmentsRes] = await Promise.all([
     supabase
       .from("engine_installations")
       .select("id, position, installed_at, removed_at, removal_reason, aircraft(registration, aircraft_type)")
@@ -57,9 +61,19 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
       .eq("engine_id", e.id)
       .order("reported_at", { ascending: false })
       .returns<Defect[]>(),
+    supabase
+      .from("ehi_assessments")
+      .select("*")
+      .eq("engine_id", e.id)
+      .order("assessed_at", { ascending: false })
+      .order("created_at", { ascending: false })
+      .returns<Assessment[]>(),
   ]);
   const installs = installsRes.data ?? [];
   const defects = defectsRes.data ?? [];
+  const assessments = assessmentsRes.data ?? [];
+  const latest = assessments[0];
+  const editable = canEdit(user.role);
 
   const current = installs.find((i) => !i.removed_at);
   const tone = ehiTone(e.ehi);
@@ -106,7 +120,7 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
               <EhiGauge value={e.ehi} />
               <p className="label mt-1">Engine Health Index</p>
             </div>
-            {canEdit(user.role) && (
+            {editable && (
               <ButtonLink href={`/engines/${encodeURIComponent(e.serial_number)}/edit`}>
                 <Pencil size={14} /> Edit
               </ButtonLink>
@@ -178,9 +192,9 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
               <div className="flex justify-between"><span className="text-muted">Open defects</span><span className="font-mono">{openDefects.length}</span></div>
               <div className="flex justify-between"><span className="text-muted">Installations</span><span className="font-mono">{installs.length}</span></div>
             </div>
-            <p className="mt-6 rounded-lg border border-dashed border-border p-3 text-xs text-muted">
-              Component health (vibration, oil, hot section, compressor) arrives with Health Monitoring in step 4.
-            </p>
+            <div className="mt-6 border-t border-border pt-5">
+              <ComponentBars assessment={latest} />
+            </div>
           </section>
 
           {e.notes && (
@@ -189,6 +203,66 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
               <p className="mt-3 whitespace-pre-wrap text-sm">{e.notes}</p>
             </section>
           )}
+        </div>
+      )}
+
+      {tab === "health" && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            <section className="panel rounded-2xl p-6">
+              <div className="flex items-end justify-between">
+                <p className="label">EHI trend</p>
+                <p className="font-mono text-xs text-muted">{assessments.length} assessment(s)</p>
+              </div>
+              <div className="mt-4">
+                {assessments.length === 0 ? (
+                  <p className="py-12 text-center text-sm text-muted">No assessments yet — record the first one.</p>
+                ) : (
+                  <TrendChart
+                    threshold={AT_RISK_EHI}
+                    thresholdLabel={`At risk < ${AT_RISK_EHI}`}
+                    points={assessments
+                      .slice(0, 24)
+                      .reverse()
+                      .map((a) => ({ label: shortDate(a.assessed_at), value: a.ehi, detail: a.source ?? undefined }))}
+                  />
+                )}
+              </div>
+            </section>
+
+            <section className="panel overflow-hidden rounded-2xl">
+              <p className="label px-6 pt-6">Assessment history</p>
+              <div className="mt-3">
+                <Table
+                  head={["Date", "Source", ...ehiComponents.map((c) => c.label), "EHI"]}
+                  empty="No assessments recorded."
+                  rows={assessments.slice(0, 20).map((a) => [
+                    <span key="d" className="font-mono text-muted">{a.assessed_at}</span>,
+                    <span key="s" className="whitespace-nowrap">{a.source ?? "—"}</span>,
+                    ...ehiComponents.map((c) => (
+                      <span key={c.key} className="font-mono" style={{ color: ehiTone(a[c.key]).color }}>{a[c.key]}</span>
+                    )),
+                    <span key="e" className="font-mono font-semibold" style={{ color: ehiTone(a.ehi).color }}>{a.ehi}</span>,
+                  ])}
+                />
+              </div>
+            </section>
+          </div>
+
+          <div className="space-y-6">
+            <section className="panel rounded-2xl p-6">
+              <p className="label mb-5">Latest component health</p>
+              <ComponentBars assessment={latest} />
+            </section>
+            {editable && (
+              <section className="panel rounded-2xl p-6">
+                <p className="label mb-5">Record health assessment</p>
+                <AssessmentForm engineId={e.id} today={new Date().toISOString().slice(0, 10)}
+                  latest={latest && Object.fromEntries(ehiComponents.map((c) => [c.key, latest[c.key]]))}
+                />
+              </section>
+            )}
+          </div>
         </div>
       )}
 
@@ -237,6 +311,38 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
       )}
 
       {tab === "timeline" && <Timeline engine={e} installs={installs} defects={defects} />}
+    </div>
+  );
+}
+
+const shortDate = (iso: string) =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit", timeZone: "UTC" });
+
+function ComponentBars({ assessment }: { assessment?: Assessment }) {
+  if (!assessment) return <p className="text-sm text-muted">No health assessment recorded yet.</p>;
+  return (
+    <div className="space-y-3">
+      {ehiComponents.map((c) => {
+        const v = assessment[c.key];
+        const tone = ehiTone(v);
+        return (
+          <div key={c.key}>
+            <div className="flex justify-between text-xs">
+              <span className="text-muted">{c.label}</span>
+              <span className="font-mono">
+                {v}
+                <span className="text-muted">/100</span> <span style={{ color: tone.color }}>· {tone.label}</span>
+              </span>
+            </div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-2">
+              <div className="h-full rounded-full" style={{ width: `${v}%`, background: tone.color }} />
+            </div>
+          </div>
+        );
+      })}
+      <p className="pt-1 font-mono text-[10px] text-muted">
+        {assessment.assessed_at} · {assessment.source ?? "Assessment"}
+      </p>
     </div>
   );
 }

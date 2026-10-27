@@ -16,7 +16,6 @@ export type EngineDefaults = {
   cso?: number | null;
   overhaul_interval_hours?: number | null;
   last_overhaul_date?: string | null;
-  ehi?: number | null;
   notes?: string | null;
 };
 
@@ -49,17 +48,14 @@ export function EngineForm({ defaults = {} }: { defaults?: EngineDefaults }) {
         <Field label="Last overhaul date" name="last_overhaul_date" type="date" defaultValue={defaults.last_overhaul_date ?? ""} />
       </Section>
 
-      <Section title="Health">
-        <Field
-          label="Engine Health Index (0–100)"
-          name="ehi"
-          type="number"
-          min={0}
-          max={100}
-          defaultValue={defaults.ehi ?? ""}
-          hint="Entered manually for now — calculated automatically from step 4"
+      <Section title="Notes">
+        <TextArea
+          label="Notes"
+          name="notes"
+          defaultValue={defaults.notes ?? ""}
+          className="md:col-span-2"
+          hint="Engine Health Index is calculated from health assessments on the passport's Health tab."
         />
-        <TextArea label="Notes" name="notes" defaultValue={defaults.notes ?? ""} className="md:col-span-2" />
       </Section>
 
       <FormMessage state={state} />

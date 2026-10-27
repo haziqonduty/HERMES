@@ -6,7 +6,7 @@ export function EhiGauge({ value }: { value: number | null }) {
   const half = Math.PI * r;
 
   return (
-    <svg viewBox="0 0 128 76" className="w-full max-w-[180px]">
+    <svg viewBox="0 0 128 76" className="w-full max-w-[180px] overflow-visible">
       <path d="M12 68 A52 52 0 0 1 116 68" fill="none" stroke="var(--surface-2)" strokeWidth="10" strokeLinecap="round" />
       <path
         d="M12 68 A52 52 0 0 1 116 68"
