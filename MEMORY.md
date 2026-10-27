@@ -26,7 +26,7 @@ Auto-maintained by Caryn. Read before every session. Newest entries at the top o
 ## Open items
 - Database schema: ask user what Hermes must track (aircraft, maintenance, documents, users…).
 - Supabase: no tables/schema yet.
-- Vercel project not yet linked.
+- Vercel: repo imported and both Supabase env vars added (Config type, all environments) on 2026-10-27. Live URL not yet recorded — ask user.
 
 ## Mistakes & lessons
 - _(none yet)_
