@@ -13,6 +13,16 @@
   --success: #3ddc84;
   --warning: #ffb020;
   --danger: #ff4d5e;
+  /* Report "paper" — light document palette (status inks darkened for white). */
+  --paper: #ffffff;
+  --ink: #0b1630;
+  --ink-muted: #5b6785;
+  --rule: #dde2ee;
+  --gold-ink: #9a6512;
+  --ok-ink: #17804a;
+  --warn-ink: #a35f00;
+  --bad-ink: #c2253a;
+  --info-ink: #0b6fa3;
   /* Dark native controls: scrollbars, date pickers, selects. */
   color-scheme: dark;
   scrollbar-color: var(--surface-2) transparent;
@@ -31,6 +41,11 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-rule: var(--rule);
+  --color-gold-ink: var(--gold-ink);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -78,4 +93,18 @@ body {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+/* Printing: reports print as plain black-on-white documents. */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+  body {
+    background: #fff;
+  }
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
 }

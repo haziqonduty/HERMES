@@ -6,7 +6,7 @@ import { DEFECT_COLUMNS, daysBetween, type DefectRecord } from "@/lib/defects";
 import { friendlyError } from "@/lib/db-errors";
 import { defectSeverity, defectStatus } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { SetupNotice } from "./setup-notice";
+import { SetupNotice } from "@/components/setup-notice";
 
 export const metadata = { title: "Defects · Hermes" };
 

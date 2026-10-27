@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Cog, Plane } from "lucide-react";
-import { StatusBadge } from "@/components/ui";
+import { ArrowLeft, ClipboardList, Cog, Plane } from "lucide-react";
+import { ButtonLink, StatusBadge } from "@/components/ui";
 import { canEdit, getCurrentUser } from "@/lib/auth";
 import { DEFECT_COLUMNS, ataChapters, daysBetween, type DefectRecord } from "@/lib/defects";
 import { defectSeverity, defectStatus } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 import { DefectUpdateForm } from "../forms";
-import { SetupNotice } from "../setup-notice";
+import { SetupNotice } from "@/components/setup-notice";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -85,10 +85,23 @@ export default async function DefectPage({ params }: PageProps<"/defects/[id]">)
         </div>
 
         {canEdit(user.role) && (
-          <section className="panel h-fit rounded-2xl p-6">
-            <p className="label mb-5">Update defect</p>
-            <DefectUpdateForm defect={d} today={today} />
-          </section>
+          <div className="space-y-6">
+            {d.status !== "closed" && (
+              <section className="panel h-fit rounded-2xl p-6">
+                <p className="label">Rectification</p>
+                <p className="mt-2 text-sm text-muted">Raise a work order to plan the job, sign off task-card steps and issue parts.</p>
+                <div className="mt-4">
+                  <ButtonLink href={`/work/new?defect=${d.id}`}>
+                    <ClipboardList size={14} /> Raise work order
+                  </ButtonLink>
+                </div>
+              </section>
+            )}
+            <section className="panel h-fit rounded-2xl p-6">
+              <p className="label mb-5">Update defect</p>
+              <DefectUpdateForm defect={d} today={today} />
+            </section>
+          </div>
         )}
       </div>
     </div>

@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="relative isolate flex min-h-screen">
-      <div className="bg-grid pointer-events-none fixed inset-0 -z-10 opacity-60" />
+      <div className="bg-grid pointer-events-none fixed inset-0 -z-10 opacity-60 print:hidden" />
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar>
@@ -15,7 +15,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           </Suspense>
         </Topbar>
         <MobileNav />
-        <main className="flex-1 px-6 py-8">
+        <main className="flex-1 px-6 py-8 print:p-0">
           <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
         </main>
       </div>

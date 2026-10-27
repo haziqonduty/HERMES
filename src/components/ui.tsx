@@ -125,3 +125,46 @@ export function Chip({ href, active, color, children }: { href: string; active: 
     </Link>
   );
 }
+
+export function KpiCard({
+  label,
+  value,
+  hint,
+  color,
+  unit,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint: React.ReactNode;
+  color?: string;
+  unit?: string;
+}) {
+  return (
+    <div className="panel rounded-2xl p-5">
+      <p className="label">{label}</p>
+      <p className="mt-4 font-mono text-4xl font-medium tabular-nums" style={color ? { color } : undefined}>
+        {value}
+        {unit && <span className="ml-1 text-lg text-muted">{unit}</span>}
+      </p>
+      <p className="mt-1 text-xs text-muted">{hint}</p>
+    </div>
+  );
+}
+
+/** Underlined tab bar driven by links (the active tab lives in the URL). */
+export function Tabs({ tabs, active }: { tabs: { key: string; label: string; href: string }[]; active: string }) {
+  return (
+    <nav className="flex gap-1 overflow-x-auto border-b border-border">
+      {tabs.map((t) => (
+        <Link
+          key={t.key}
+          href={t.href}
+          className={`relative whitespace-nowrap px-4 py-3 text-sm transition ${active === t.key ? "text-gold-soft" : "text-muted hover:text-foreground"}`}
+        >
+          {t.label}
+          {active === t.key && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-gold" />}
+        </Link>
+      ))}
+    </nav>
+  );
+}

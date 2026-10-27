@@ -5,7 +5,7 @@ import { Chip, PageHeader, StatusBadge, Table } from "@/components/ui";
 import { ataChapters, daysBetween, removalType } from "@/lib/defects";
 import { fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { SetupNotice } from "../defects/setup-notice";
+import { SetupNotice } from "@/components/setup-notice";
 
 export const metadata = { title: "Reliability Analytics · Hermes" };
 

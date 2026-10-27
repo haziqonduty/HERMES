@@ -4,6 +4,8 @@ import { Donut, EhiGauge, ehiTone } from "@/components/charts";
 import { TrendChart } from "@/components/trend-chart";
 import { Badge, StatusBadge, Table } from "@/components/ui";
 import { AT_RISK_EHI, bandOf, ehiBands, monthlyAverage } from "@/lib/health";
+import { WO_ACTIVE } from "@/lib/maintenance";
+import { loadPlanner } from "@/lib/maintenance-data";
 import { channels } from "@/lib/monitoring";
 import { describe, loadMonitoring, statusByEngine, type MonitorStatus } from "@/lib/monitoring-data";
 import { aircraftStatus, defectSeverity, fmtHours } from "@/lib/status";
@@ -45,7 +47,7 @@ export default async function DashboardPage() {
 
   const since6m = new Date(now.getTime() - 183 * 86_400_000).toISOString().slice(0, 10);
 
-  const [engines, aircraft, defects, assessments, flights, oilLimits, monitoring] = await Promise.all([
+  const [engines, aircraft, defects, assessments, flights, oilLimits, monitoring, plan, aogWos] = await Promise.all([
     supabase
       .from("engines")
       .select("id, serial_number, model, status, ehi, tsn, tso, overhaul_interval_hours, engine_installations(removed_at, position, aircraft(registration))")
@@ -61,6 +63,13 @@ export default async function DashboardPage() {
     supabase.from("flight_logs").select("flight_hours").gte("flight_date", since30d),
     supabase.from("engines").select("id, oil_limit_qph"),
     loadMonitoring(supabase, { since: since6m }),
+    loadPlanner(supabase, now.toISOString().slice(0, 10)),
+    supabase
+      .from("work_orders")
+      .select("id, wo_no, title, aircraft(registration)")
+      .eq("priority", "aog")
+      .in("status", WO_ACTIVE)
+      .returns<{ id: string; wo_no: string | null; title: string; aircraft: { registration: string } | null }[]>(),
   ]);
 
   if (engines.error || aircraft.error || defects.error) return <SetupNotice />;
@@ -109,6 +118,7 @@ export default async function DashboardPage() {
       } satisfies Alert];
     });
   });
+  const overdueTasks = plan?.tasks.filter((t) => t.due.state === "overdue") ?? [];
   const alerts: Alert[] = [
     ...atRisk.map((e) => ({
       level: (e.ehi < 45 ? "critical" : "warning") as Alert["level"],
@@ -123,6 +133,20 @@ export default async function DashboardPage() {
       detail: [d.aircraft?.registration, d.engines?.serial_number, d.reported_at].filter(Boolean).join(" · "),
       href: `/defects/${d.id}`,
     })),
+    ...(aogWos.data ?? []).map((w) => ({
+      level: "critical" as const,
+      title: `AOG — ${w.title}`,
+      detail: [w.wo_no, w.aircraft?.registration].filter(Boolean).join(" · "),
+      href: `/work/${w.id}`,
+    })),
+    ...(overdueTasks.length
+      ? [{
+          level: "warning" as const,
+          title: `${overdueTasks.length} maintenance task(s) overdue`,
+          detail: `${new Set(overdueTasks.map((t) => t.asset)).size} asset(s) · ${overdueTasks.filter((t) => !t.openWo).length} without a work order`,
+          href: "/planner?state=overdue",
+        }]
+      : []),
     ...overhaulSoon.map((e) => ({
       level: "warning" as const,
       title: `${e.serial_number} — overhaul due in ${fmtHours(remaining(e))} FH`,

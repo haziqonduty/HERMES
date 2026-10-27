@@ -20,3 +20,7 @@ export function friendlyError(error: PgError, fallback = "Something went wrong. 
       return error.message.includes("row-level security") ? "Your role does not have permission to do this." : fallback;
   }
 }
+
+/** True when the error means a migration hasn't been applied (missing table, column or relationship). */
+export const isMissingSchema = (error: PgError) =>
+  !!error && ["42P01", "42703", "PGRST200", "PGRST204", "PGRST205"].includes(error.code ?? "");

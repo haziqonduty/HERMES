@@ -23,7 +23,7 @@ function PathnameReader({ render }: { render: (pathname: string | null) => React
 
 export function Sidebar() {
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface/70 backdrop-blur-xl lg:flex">
+    <aside className="sticky top-0 hidden h-screen print:!hidden w-64 shrink-0 flex-col border-r border-border bg-surface/70 backdrop-blur-xl lg:flex">
       <div className="border-b border-border px-5 py-5">
         <Link href="/dashboard">
           <Logo />
@@ -36,7 +36,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-border px-5 py-4 font-mono text-[10px] tracking-widest text-muted">
-        v0.5 · DEFECTS &amp; RELIABILITY
+        v0.6 · MAINTENANCE
       </div>
     </aside>
   );
@@ -74,7 +74,7 @@ function SidebarLinks({ pathname }: { pathname: string | null }) {
 /** Horizontal module strip shown below the top bar on small screens. */
 export function MobileNav() {
   return (
-    <nav className="flex gap-1 overflow-x-auto border-b border-border bg-surface/70 px-3 py-2 lg:hidden">
+    <nav className="flex gap-1 overflow-x-auto border-b border-border bg-surface/70 px-3 py-2 lg:hidden print:hidden">
       <WithPathname
         render={(pathname) =>
           navItems.map(({ slug, label, icon: Icon }) => (

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CircleDot, Cog, Pencil, Plane, ShieldAlert, Wrench } from "lucide-react";
+import { ArrowLeft, CircleDot, Cog, FileText, Pencil, Plane, ShieldAlert, Wrench } from "lucide-react";
 import { EhiGauge, ehiTone } from "@/components/charts";
 import { ButtonLink, Stat, StatusBadge, Table } from "@/components/ui";
 import { canEdit, getCurrentUser } from "@/lib/auth";
@@ -128,11 +128,16 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
               <EhiGauge value={e.ehi} />
               <p className="label mt-1">Engine Health Index</p>
             </div>
-            {editable && (
-              <ButtonLink href={`/engines/${encodeURIComponent(e.serial_number)}/edit`}>
-                <Pencil size={14} /> Edit
+            <div className="flex flex-col gap-2">
+              {editable && (
+                <ButtonLink href={`/engines/${encodeURIComponent(e.serial_number)}/edit`}>
+                  <Pencil size={14} /> Edit
+                </ButtonLink>
+              )}
+              <ButtonLink href={`/reports/engine?serial=${encodeURIComponent(e.serial_number)}`}>
+                <FileText size={14} /> Report
               </ButtonLink>
-            )}
+            </div>
           </div>
         </div>
 

@@ -5,7 +5,7 @@ import { LogoMark } from "./logo";
 
 export function Topbar({ children }: { children: React.ReactNode }) {
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/70 px-6 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 flex h-16 print:hidden items-center justify-between gap-4 border-b border-border bg-background/70 px-6 backdrop-blur-xl">
       <div className="flex items-center gap-3 lg:hidden">
         <LogoMark className="h-7 w-auto" />
         <span className="text-gold-gradient font-semibold tracking-[0.3em]">HERMES</span>
