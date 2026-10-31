@@ -1,13 +1,13 @@
 import { RSection, RStats, RStatus, RTable, ReportSheet, ReportToolbar, ink, mono, reportStamp } from "@/components/report";
 import { getCurrentUser } from "@/lib/auth";
 import { AT_RISK_EHI, bandOf } from "@/lib/health";
-import { WO_ACTIVE, dueState, stockLevel, stockState, woPriority, woStatus, type Part } from "@/lib/maintenance";
-import { loadOverhaulForecast, loadPlanner } from "@/lib/maintenance-data";
+import { WO_ACTIVE, dueState, stockLevel, stockState, woPriority, woStatus } from "@/lib/maintenance";
+import { loadOverhaulForecast, loadParts, loadPlanner } from "@/lib/maintenance-data";
 import { channels, monitorLevel } from "@/lib/monitoring";
 import { describe, loadMonitoring, statusByEngine } from "@/lib/monitoring-data";
 import { aircraftStatus, defectSeverity, defectStatus, engineStatus, fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 
 export const metadata = { title: "Engineering Summary · Hermes" };
 
@@ -23,8 +23,8 @@ type EngineRow = {
 export default async function SummaryReport() {
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
   const now = await requestNow();
-  const today = now.toISOString().slice(0, 10);
-  const since6m = new Date(now.getTime() - 183 * 86_400_000).toISOString().slice(0, 10);
+  const today = isoDate(now);
+  const since6m = isoDate(new Date(now.getTime() - 183 * 86_400_000));
 
   const [aircraftRes, enginesRes, limitsRes, defectsRes, monitoring, plan, wosRes, partsRes] = await Promise.all([
     supabase.from("aircraft").select("id, registration, aircraft_type, status, total_hours").order("registration"),
@@ -48,7 +48,7 @@ export default async function SummaryReport() {
       .in("status", WO_ACTIVE)
       .order("due_date", { ascending: true, nullsFirst: false })
       .returns<{ wo_no: string | null; title: string; priority: string; status: string; due_date: string | null; aircraft: { registration: string } | null; engines: { serial_number: string } | null }[]>(),
-    supabase.from("parts").select("*").order("part_number").returns<Part[]>(),
+    loadParts(supabase),
   ]);
   const overhaul = plan ? await loadOverhaulForecast(supabase, plan.rates, today) : [];
 

@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { Field, FormMessage, SelectField, SubmitButton, type FormState } from "@/components/form";
 import { failureModes } from "@/lib/defects";
 import { aircraftStatus, engineStatus } from "@/lib/status";
-import { installEngine, logFlight, removeEngine, saveAircraft } from "./actions";
+import { deleteFlight, installEngine, logFlight, removeEngine, saveAircraft } from "./actions";
 
 const toOptions = (m: Record<string, { label: string }>) => Object.entries(m).map(([value, { label }]) => ({ value, label }));
 
@@ -139,6 +139,26 @@ export function RemoveForm({ installationId, today }: { installationId: string; 
       <SelectField label="Engine goes to" name="engine_status" defaultValue="unserviceable" options={statusOptions} />
       <FormMessage state={state} />
       <SubmitButton variant="danger" pendingText="Removing…">Remove engine</SubmitButton>
+    </form>
+  );
+}
+
+/** Deletes a mistaken flight log after confirmation. */
+export function DeleteFlightButton({ id, label }: { id: string; label: string }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(deleteFlight, {});
+  return (
+    <form
+      action={action}
+      onSubmit={(e) => {
+        if (!confirm(`Delete flight ${label}? Its hours and cycles will be subtracted from the aircraft and its engines.`)) e.preventDefault();
+      }}
+      className="flex items-center justify-end gap-2"
+    >
+      <input type="hidden" name="id" value={id} />
+      {state.error && <span className="text-xs text-danger">{state.error}</span>}
+      <button type="submit" disabled={pending} title="Delete wrong entry" className="rounded-md px-2 py-1 text-xs text-muted transition hover:bg-danger/10 hover:text-danger disabled:opacity-50">
+        {pending ? "…" : "Delete"}
+      </button>
     </form>
   );
 }

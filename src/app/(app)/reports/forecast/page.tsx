@@ -5,7 +5,7 @@ import { dueState, intervalLabel } from "@/lib/maintenance";
 import { UTILISATION_DAYS, loadOverhaulForecast, loadPlanner } from "@/lib/maintenance-data";
 import { fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 
 export const metadata = { title: "Maintenance Forecast · Hermes" };
 
@@ -14,12 +14,12 @@ const DAYS_AHEAD = 90;
 export default async function ForecastReport() {
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
   const now = await requestNow();
-  const today = now.toISOString().slice(0, 10);
+  const today = isoDate(now);
   const plan = await loadPlanner(supabase, today);
   if (!plan) return <SetupNotice module="Maintenance Planner" file="0006_maintenance.sql" />;
   const overhaul = await loadOverhaulForecast(supabase, plan.rates, today);
 
-  const until = new Date(now.getTime() + DAYS_AHEAD * 86_400_000).toISOString().slice(0, 10);
+  const until = isoDate(new Date(now.getTime() + DAYS_AHEAD * 86_400_000));
   const horizon = new Date(Date.UTC(now.getUTCFullYear() + 1, now.getUTCMonth(), now.getUTCDate())).toISOString().slice(0, 10);
   const window = plan.tasks.filter((t) => t.due.state === "overdue" || (t.due.dueDate && t.due.dueDate <= until));
   const overdue = window.filter((t) => t.due.state === "overdue");

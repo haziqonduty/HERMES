@@ -7,10 +7,11 @@ import { canEdit, getCurrentUser } from "@/lib/auth";
 import { isMissingSchema } from "@/lib/db-errors";
 import { WO_ACTIVE, WO_COLUMNS, fmtQty, isWoOverdue, movementKind, woKind, woPriority, woStatus, type WorkOrder } from "@/lib/maintenance";
 import { defectStatus, fmtHours } from "@/lib/status";
+import { loadParts } from "@/lib/maintenance-data";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 import { toggleStep } from "../actions";
-import { AddStepForm, IssuePartForm, WorkOrderUpdateForm, type PartOption } from "../forms";
+import { AddStepForm, IssuePartForm, WorkOrderUpdateForm } from "../forms";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -47,12 +48,12 @@ export default async function WorkOrderPage({ params }: PageProps<"/work/[id]">)
       .eq("work_order_id", id)
       .order("created_at")
       .returns<Movement[]>(),
-    supabase.from("parts").select("id, part_number, description, unit, quantity, location").order("part_number").limit(1000).returns<PartOption[]>(),
+    loadParts(supabase),
   ]);
   const steps = stepsRes.data ?? [];
   const moves = movesRes.data ?? [];
 
-  const today = (await requestNow()).toISOString().slice(0, 10);
+  const today = isoDate(await requestNow());
   const editable = canEdit(user.role);
   const active = WO_ACTIVE.includes(w.status);
   const doneSteps = steps.filter((s) => s.done).length;

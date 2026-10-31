@@ -6,7 +6,7 @@ import { DEFECT_COLUMNS, daysBetween, type DefectRecord } from "@/lib/defects";
 import { friendlyError } from "@/lib/db-errors";
 import { defectSeverity, defectStatus } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 import { SetupNotice } from "@/components/setup-notice";
 
 export const metadata = { title: "Defects · Hermes" };
@@ -19,8 +19,8 @@ export default async function DefectsPage({ searchParams }: PageProps<"/defects"
 
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
   const now = await requestNow();
-  const today = now.toISOString().slice(0, 10);
-  const since30d = new Date(now.getTime() - 30 * 86_400_000).toISOString().slice(0, 10);
+  const today = isoDate(now);
+  const since30d = isoDate(new Date(now.getTime() - 30 * 86_400_000));
 
   let query = supabase.from("defects").select(DEFECT_COLUMNS).order("reported_at", { ascending: false }).limit(300);
   if (status === "active") query = query.neq("status", "closed");

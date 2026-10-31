@@ -7,7 +7,7 @@ import { friendlyError, isMissingSchema } from "@/lib/db-errors";
 import { WO_ACTIVE, WO_COLUMNS, isWoOverdue, woKind, woPriority, woStatus, type WorkOrder } from "@/lib/maintenance";
 import { fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 
 export const metadata = { title: "Work Management · Hermes" };
 
@@ -19,8 +19,8 @@ export default async function WorkPage({ searchParams }: PageProps<"/work">) {
 
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
   const now = await requestNow();
-  const today = now.toISOString().slice(0, 10);
-  const since30d = new Date(now.getTime() - 30 * 86_400_000).toISOString().slice(0, 10);
+  const today = isoDate(now);
+  const since30d = isoDate(new Date(now.getTime() - 30 * 86_400_000));
 
   let query = supabase.from("work_orders").select(WO_COLUMNS).order("created_at", { ascending: false }).limit(300);
   if (status === "active") query = query.in("status", WO_ACTIVE);

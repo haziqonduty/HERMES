@@ -1,5 +1,6 @@
 import "server-only";
-import { WO_ACTIVE, taskDue, type MaintenanceTask, type TaskDue } from "./maintenance";
+import { fetchAll } from "./fetch-all";
+import { WO_ACTIVE, taskDue, type MaintenanceTask, type Part, type TaskDue } from "./maintenance";
 import type { createClient } from "./supabase/server";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -42,7 +43,9 @@ const addDays = (iso: string, d: number) => new Date(Date.parse(`${iso}T00:00:00
 /** Average flight hours and cycles per day for each aircraft over the last UTILISATION_DAYS. */
 export async function loadRates(supabase: Supabase, today: string): Promise<Rates> {
   const since = addDays(today, -UTILISATION_DAYS);
-  const { data } = await supabase.from("flight_logs").select("aircraft_id, flight_hours, cycles").gte("flight_date", since).limit(10000);
+  const { data } = await fetchAll<{ aircraft_id: string; flight_hours: number; cycles: number }>((from, to) =>
+    supabase.from("flight_logs").select("aircraft_id, flight_hours, cycles").gte("flight_date", since).order("id").range(from, to),
+  );
   const rates: Rates = new Map();
   for (const f of data ?? []) {
     const r = rates.get(f.aircraft_id) ?? { hoursPerDay: 0, cyclesPerDay: 0 };
@@ -59,19 +62,23 @@ export async function loadPlanner(
   today: string,
   opts: { taskId?: string; engineId?: string; aircraftId?: string; includeInactive?: boolean } = {},
 ): Promise<{ tasks: PlannedTask[]; rates: Rates } | null> {
-  let query = supabase
-    .from("maintenance_tasks")
-    .select(
-      "*, engines(serial_number, tsn, csn, engine_installations(aircraft_id, removed_at, aircraft(registration))), aircraft(registration, total_hours, total_cycles)",
-    )
-    .limit(2000);
-  if (!opts.includeInactive) query = query.eq("active", true);
-  if (opts.taskId) query = query.eq("id", opts.taskId);
-  if (opts.engineId) query = query.eq("engine_id", opts.engineId);
-  if (opts.aircraftId) query = query.eq("aircraft_id", opts.aircraftId);
+  const page = (from: number, to: number) => {
+    let query = supabase
+      .from("maintenance_tasks")
+      .select(
+        "*, engines(serial_number, tsn, csn, engine_installations(aircraft_id, removed_at, aircraft(registration))), aircraft(registration, total_hours, total_cycles)",
+      )
+      .order("id")
+      .range(from, to);
+    if (!opts.includeInactive) query = query.eq("active", true);
+    if (opts.taskId) query = query.eq("id", opts.taskId);
+    if (opts.engineId) query = query.eq("engine_id", opts.engineId);
+    if (opts.aircraftId) query = query.eq("aircraft_id", opts.aircraftId);
+    return query.returns<TaskRow[]>();
+  };
 
   const [tasksRes, rates, wosRes] = await Promise.all([
-    query.returns<TaskRow[]>(),
+    fetchAll(page),
     loadRates(supabase, today),
     supabase.from("work_orders").select("id, wo_no, task_id").not("task_id", "is", null).in("status", WO_ACTIVE),
   ]);
@@ -132,3 +139,7 @@ export async function loadOverhaulForecast(supabase: Supabase, rates: Rates, tod
     })
     .sort((a, b) => a.remaining - b.remaining);
 }
+
+/** Every store item (a real store easily exceeds the 1000-row API page), by part number. */
+export const loadParts = (supabase: Supabase) =>
+  fetchAll<Part>((from, to) => supabase.from("parts").select("*").order("part_number").order("location").order("id").range(from, to).returns<Part[]>());

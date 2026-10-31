@@ -69,3 +69,26 @@ export async function recordAssessment(_prev: FormState, fd: FormData): Promise<
   refresh();
   return { ok: `Assessment recorded — EHI ${data.ehi}.` };
 }
+
+/**
+ * Changes the status of an engine that is not fitted (e.g. back from overhaul → Spare).
+ * "Overhaul completed" also zeroes TSO/CSO and records the overhaul date.
+ */
+export async function setEngineStatus(_prev: FormState, fd: FormData): Promise<FormState> {
+  const status = str(fd, "status");
+  const overhauled = fd.get("overhauled") === "on";
+  const overhaulDate = str(fd, "overhaul_date");
+  if (!["spare", "in_overhaul", "unserviceable", "retired"].includes(status)) return { error: "Choose a status." };
+  if (overhauled && !overhaulDate) return { error: "Enter the overhaul completion date." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("engines")
+    .update({ status, ...(overhauled ? { tso: 0, cso: 0, last_overhaul_date: overhaulDate } : {}) })
+    .eq("id", str(fd, "id"))
+    .select("serial_number");
+  if (error) return { error: friendlyError(error) };
+  if (!data?.length) return { error: "Your role does not have permission to do this." };
+  refresh();
+  return { ok: overhauled ? "Overhaul recorded — TSO and CSO reset to 0." : "Engine status updated." };
+}

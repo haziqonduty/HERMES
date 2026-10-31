@@ -17,7 +17,19 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
   if (error?.code === "user_banned") return { error: "This account has been deactivated. Contact your HERMES administrator." };
   if (error) return { error: "Invalid credentials or account not activated." };
 
-  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
+  redirect(safeNext(next));
+}
+
+/**
+ * Only same-site paths are allowed after sign-in. Browsers treat "/\evil.com" like
+ * "//evil.com", so a simple startsWith("/") check is not enough (open redirect).
+ */
+function safeNext(next: string) {
+  try {
+    const url = new URL(next, "https://hermes.local");
+    if (next.startsWith("/") && url.origin === "https://hermes.local" && !next.includes("\\")) return url.pathname + url.search;
+  } catch {}
+  return "/dashboard";
 }
 
 export async function signOut() {

@@ -11,7 +11,9 @@ export function friendlyError(error: PgError, fallback = "Something went wrong. 
           ? "That engine is already installed on an aircraft."
           : "A record with that identifier already exists.";
     case "23514":
-      return "One of the values is out of range. Check hours, cycles and EHI.";
+      return error.message.includes("engine_installations")
+        ? "The removal date can't be before the install date."
+        : "One of the values is out of range — check the numbers and dates entered.";
     case "42501":
       return "Your role does not have permission to do this.";
     case "P0001": // raise exception from our SQL functions

@@ -1,7 +1,8 @@
 import "server-only";
+import { isoDate } from "./now";
 import { AT_RISK_EHI } from "./health";
-import { WO_ACTIVE, stockState, type Part } from "./maintenance";
-import { loadPlanner, type PlannedTask } from "./maintenance-data";
+import { WO_ACTIVE, stockState } from "./maintenance";
+import { loadParts, loadPlanner, type PlannedTask } from "./maintenance-data";
 import type { Level } from "./monitoring";
 import { loadMonitoring, statusByEngine } from "./monitoring-data";
 import type { StatusMeta } from "./status";
@@ -61,7 +62,7 @@ type WoRow = { id: string; wo_no: string | null; title: string; priority: string
 const addDays = (iso: string, d: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + Math.round(d) * 86_400_000).toISOString().slice(0, 10);
 
 export async function loadReadiness(supabase: Supabase, now: Date) {
-  const today = now.toISOString().slice(0, 10);
+  const today = isoDate(now);
   const since6m = addDays(today, -183);
   const outlook = addDays(today, OUTLOOK_DAYS);
 
@@ -75,7 +76,7 @@ export async function loadReadiness(supabase: Supabase, now: Date) {
     supabase.from("engines").select("id, oil_limit_qph"),
     supabase.from("defects").select("id, defect_no, description, severity, status, aircraft_id, engine_id, deferred_until").neq("status", "closed").returns<DefectRow[]>(),
     supabase.from("work_orders").select("id, wo_no, title, priority, aircraft_id").in("status", WO_ACTIVE).returns<WoRow[]>(),
-    supabase.from("parts").select("*").returns<Part[]>(),
+    loadParts(supabase),
     loadMonitoring(supabase, { since: since6m }),
     loadPlanner(supabase, today),
   ]);

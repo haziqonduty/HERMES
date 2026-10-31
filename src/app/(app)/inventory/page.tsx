@@ -4,8 +4,9 @@ import { SetupNotice } from "@/components/setup-notice";
 import { ButtonLink, Chip, KpiCard, PageHeader, StatusBadge, Table, Tabs } from "@/components/ui";
 import { canEdit, getCurrentUser } from "@/lib/auth";
 import { friendlyError, isMissingSchema } from "@/lib/db-errors";
-import { fmtQty, movementKind, partCategory, stockLevel, stockState, type Part } from "@/lib/maintenance";
+import { fmtQty, movementKind, partCategory, stockLevel, stockState } from "@/lib/maintenance";
 import { engineStatus, fmtHours } from "@/lib/status";
+import { loadParts } from "@/lib/maintenance-data";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Inventory · Hermes" };
@@ -43,7 +44,7 @@ export default async function InventoryPage({ searchParams }: PageProps<"/invent
 
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
   const [partsRes, enginesRes, movesRes] = await Promise.all([
-    supabase.from("parts").select("*").order("part_number").limit(2000).returns<Part[]>(),
+    loadParts(supabase),
     supabase
       .from("engines")
       .select("id, serial_number, model, status, tso, overhaul_interval_hours, ehi, engine_installations(removed_at)")

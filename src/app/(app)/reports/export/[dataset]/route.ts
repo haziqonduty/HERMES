@@ -1,6 +1,7 @@
+import { fetchAll } from "@/lib/fetch-all";
 import { intervalLabel } from "@/lib/maintenance";
 import { loadPlanner } from "@/lib/maintenance-data";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 import { createClient } from "@/lib/supabase/server";
 
 type Row = Record<string, unknown>;
@@ -27,34 +28,30 @@ function toCsv(rows: Row[]) {
   return [cols.join(","), ...flat.map((r) => cols.map((c) => cell(r[c])).join(","))].join("\r\n");
 }
 
+/** Every row of a table (paged past the 1000-row API limit), newest/first by `order`, ties broken by id. */
+const all = async (s: Supabase, table: string, columns: string, order: string, ascending = true) =>
+  (await fetchAll<Row>((from, to) => s.from(table).select(columns).order(order, { ascending }).order("id").range(from, to).returns<Row[]>())).data;
+
 const datasets: Record<string, (supabase: Supabase, today: string) => Promise<Row[] | null>> = {
-  aircraft: async (s) =>
-    (await s.from("aircraft").select("registration, aircraft_type, serial_number, squadron, base, status, total_hours, total_cycles").order("registration")).data,
-  engines: async (s) =>
-    (
-      await s
-        .from("engines")
-        .select("serial_number, model, manufacturer, status, tsn, csn, tso, cso, overhaul_interval_hours, last_overhaul_date, ehi")
-        .order("serial_number")
-    ).data,
-  defects: async (s) =>
-    (
-      await s
-        .from("defects")
-        .select(
-          "defect_no, reported_at, aircraft(registration), engines(serial_number), ata_chapter, system, description, severity, status, failure_mode, detection_method, root_cause, action_taken, deferred_until, closed_at",
-        )
-        .order("reported_at", { ascending: false })
-    ).data,
-  "work-orders": async (s) =>
-    (
-      await s
-        .from("work_orders")
-        .select(
-          "wo_no, title, kind, priority, status, aircraft(registration), engines(serial_number), defects(defect_no), maintenance_tasks(task_ref), due_date, assigned_to, est_hours, actual_hours, started_at, completed_at, completion_notes",
-        )
-        .order("created_at", { ascending: false })
-    ).data,
+  aircraft: (s) => all(s, "aircraft", "registration, aircraft_type, serial_number, squadron, base, status, total_hours, total_cycles", "registration"),
+  engines: (s) =>
+    all(s, "engines", "serial_number, model, manufacturer, status, tsn, csn, tso, cso, overhaul_interval_hours, last_overhaul_date, ehi", "serial_number"),
+  defects: (s) =>
+    all(
+      s,
+      "defects",
+      "defect_no, reported_at, aircraft(registration), engines(serial_number), ata_chapter, system, description, severity, status, failure_mode, detection_method, root_cause, action_taken, deferred_until, closed_at",
+      "reported_at",
+      false,
+    ),
+  "work-orders": (s) =>
+    all(
+      s,
+      "work_orders",
+      "wo_no, title, kind, priority, status, aircraft(registration), engines(serial_number), defects(defect_no), maintenance_tasks(task_ref), due_date, assigned_to, est_hours, actual_hours, started_at, completed_at, completion_notes",
+      "created_at",
+      false,
+    ),
   maintenance: async (s, today) => {
     const plan = await loadPlanner(s, today);
     return plan
@@ -76,15 +73,9 @@ const datasets: Record<string, (supabase: Supabase, today: string) => Promise<Ro
         }))
       : null;
   },
-  parts: async (s) =>
-    (await s.from("parts").select("part_number, description, category, unit, quantity, min_quantity, location, applicability").order("part_number")).data,
-  movements: async (s) =>
-    (
-      await s
-        .from("stock_movements")
-        .select("moved_at, kind, quantity, parts(part_number, description, unit), work_orders(wo_no), reference, notes")
-        .order("moved_at", { ascending: false })
-    ).data,
+  parts: (s) => all(s, "parts", "part_number, description, category, unit, quantity, min_quantity, location, applicability", "part_number"),
+  movements: (s) =>
+    all(s, "stock_movements", "moved_at, kind, quantity, parts(part_number, description, unit), work_orders(wo_no), reference, notes", "moved_at", false),
 };
 
 export async function GET(_req: Request, ctx: RouteContext<"/reports/export/[dataset]">) {
@@ -96,7 +87,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/reports/export/[dat
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return new Response("Sign in required", { status: 401 });
 
-  const today = (await requestNow()).toISOString().slice(0, 10);
+  const today = isoDate(await requestNow());
   const rows = await load(supabase, today);
   if (!rows) return new Response("Data not available — has the migration been run?", { status: 503 });
 

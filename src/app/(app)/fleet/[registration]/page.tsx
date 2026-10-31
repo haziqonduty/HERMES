@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, Plane } from "lucide-react";
 import { ehiTone } from "@/components/charts";
 import { ButtonLink, PageHeader, Stat, StatusBadge, Table } from "@/components/ui";
-import { canEdit, getCurrentUser } from "@/lib/auth";
+import { canCorrectFlights, canEdit, getCurrentUser } from "@/lib/auth";
 import { aircraftStatus, defectSeverity, defectStatus, fmtHours, fmtInt } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
-import { FlightLogForm, InstallForm, RemoveForm } from "../forms";
+import { isoDate, requestNow } from "@/lib/now";
+import { DeleteFlightButton, FlightLogForm, InstallForm, RemoveForm } from "../forms";
 
 type Installation = {
   id: string;
@@ -38,7 +38,7 @@ export default async function AircraftPage({ params }: PageProps<"/fleet/[regist
   ]);
 
   const editable = canEdit(user.role);
-  const today = (await requestNow()).toISOString().slice(0, 10);
+  const today = isoDate(await requestNow());
   const active = new Map((installs.data ?? []).filter((i) => !i.removed_at).map((i) => [i.position, i]));
   const history = (installs.data ?? []).filter((i) => i.removed_at);
 
@@ -138,16 +138,24 @@ export default async function AircraftPage({ params }: PageProps<"/fleet/[regist
           <p className="label px-6 pt-6">Recent flights</p>
           <div className="mt-3">
             <Table
-              head={["Date", "Sortie", "Hours", "Cycles"]}
+              head={["Date", "Sortie", "Hours", "Cycles", ...(canCorrectFlights(user.role) ? [""] : [])]}
               empty="No flights logged yet."
               rows={(flights.data ?? []).map((f) => [
-                <span key="d" className="font-mono text-muted">{f.flight_date}</span>,
+                <span key="d" className="whitespace-nowrap font-mono text-muted">{f.flight_date}</span>,
                 f.sortie_ref ?? "—",
                 <span key="h" className="font-mono">{fmtHours(f.flight_hours)}</span>,
                 <span key="c" className="font-mono">{f.cycles}</span>,
+                ...(canCorrectFlights(user.role)
+                  ? [<DeleteFlightButton key="x" id={f.id} label={`${f.flight_date} · ${fmtHours(f.flight_hours)} FH`} />]
+                  : []),
               ])}
             />
           </div>
+          {canCorrectFlights(user.role) && (
+            <p className="px-6 pb-4 pt-2 text-xs text-muted">
+              Deleting a wrong entry subtracts its hours and cycles from the aircraft and the engines fitted on that date. Then log the correct flight.
+            </p>
+          )}
         </section>
         {editable && (
           <section className="panel rounded-2xl p-6">

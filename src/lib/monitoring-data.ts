@@ -1,4 +1,5 @@
 import "server-only";
+import { fetchAll } from "./fetch-all";
 import type { createClient } from "./supabase/server";
 import {
   latestByEngine,
@@ -23,17 +24,18 @@ export type MonitoringData = {
 
 /** All monitoring records since `since` (newest first), optionally for one engine. Null if 0004 isn't applied. */
 export async function loadMonitoring(supabase: Supabase, opts: { since?: string; engineId?: string } = {}): Promise<MonitoringData | null> {
-  const q = (table: string, dateCol: string) => {
-    let query = supabase.from(table).select("*").order(dateCol, { ascending: false }).order("created_at", { ascending: false });
-    if (opts.since) query = query.gte(dateCol, opts.since);
-    if (opts.engineId) query = query.eq("engine_id", opts.engineId);
-    return query.limit(2000);
-  };
+  const q = <T,>(table: string, dateCol: string) =>
+    fetchAll<T>((from, to) => {
+      let query = supabase.from(table).select("*").order(dateCol, { ascending: false }).order("created_at", { ascending: false }).order("id");
+      if (opts.since) query = query.gte(dateCol, opts.since);
+      if (opts.engineId) query = query.eq("engine_id", opts.engineId);
+      return query.range(from, to).returns<T[]>();
+    });
   const [oil, soap, chip, borescope] = await Promise.all([
-    q("oil_uplifts", "serviced_at").returns<OilUplift[]>(),
-    q("oil_samples", "sampled_at").returns<OilSample[]>(),
-    q("chip_checks", "checked_at").returns<ChipCheck[]>(),
-    q("borescope_inspections", "inspected_at").returns<BorescopeInspection[]>(),
+    q<OilUplift>("oil_uplifts", "serviced_at"),
+    q<OilSample>("oil_samples", "sampled_at"),
+    q<ChipCheck>("chip_checks", "checked_at"),
+    q<BorescopeInspection>("borescope_inspections", "inspected_at"),
   ]);
   if (oil.error || soap.error || chip.error || borescope.error) return null;
   return { oil: oil.data ?? [], soap: soap.data ?? [], chip: chip.data ?? [], borescope: borescope.data ?? [] };

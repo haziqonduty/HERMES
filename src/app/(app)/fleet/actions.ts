@@ -97,3 +97,13 @@ export async function removeEngine(_prev: FormState, fd: FormData): Promise<Form
   refresh();
   return { ok: "Engine removed." };
 }
+
+/** Deletes a wrong flight log; the rollup trigger subtracts its hours/cycles again. */
+export async function deleteFlight(_prev: FormState, fd: FormData): Promise<FormState> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("flight_logs").delete().eq("id", str(fd, "id")).select("id");
+  if (error) return { error: friendlyError(error) };
+  if (!data?.length) return { error: "Only supervisors, OC Engineering and admins can delete flight logs." };
+  refresh();
+  return { ok: "Flight deleted." };
+}

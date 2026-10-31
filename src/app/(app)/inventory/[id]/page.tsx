@@ -7,7 +7,7 @@ import { canEdit, getCurrentUser } from "@/lib/auth";
 import { isMissingSchema } from "@/lib/db-errors";
 import { fmtQty, movementKind, partCategory, stockLevel, stockState, type Part } from "@/lib/maintenance";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 import { MovementForm, PartForm } from "../forms";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -46,8 +46,8 @@ export default async function PartPage({ params }: PageProps<"/inventory/[id]">)
   const moves = movesRes.data ?? [];
   const s = stockState(p);
   const now = await requestNow();
-  const today = now.toISOString().slice(0, 10);
-  const since90 = new Date(now.getTime() - 90 * 86_400_000).toISOString().slice(0, 10);
+  const today = isoDate(now);
+  const since90 = isoDate(new Date(now.getTime() - 90 * 86_400_000));
   const used90 = moves.filter((m) => m.moved_at >= since90 && Number(m.quantity) < 0 && m.kind === "issue").reduce((t, m) => t - Number(m.quantity), 0);
   // Days of cover at the last quarter's issue rate.
   const cover = used90 > 0 ? Math.floor(Number(p.quantity) / (used90 / 90)) : null;

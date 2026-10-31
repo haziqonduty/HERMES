@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,8 +10,14 @@ const EDIT_ROLES = new Set(["admin", "oc_engineering", "supervisor", "planner", 
 /** Mirrors public.can_edit_engineering() in the database. UI hint only — RLS is the real guard. */
 export const canEdit = (role: string) => EDIT_ROLES.has(role);
 
-/** Signed-in user with their HERMES profile. Must be called inside a <Suspense> boundary. */
-export async function getCurrentUser(): Promise<CurrentUser> {
+/** Mirrors the "flight_logs delete" policy (0009): who may delete a wrong flight log. */
+export const canCorrectFlights = (role: string) => ["admin", "oc_engineering", "supervisor"].includes(role);
+
+/**
+ * Signed-in user with their HERMES profile. Must be called inside a <Suspense> boundary.
+ * Cached per request: the layout's top bar and the page share one lookup.
+ */
+export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -35,4 +42,4 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     name: [profile?.rank, profile?.full_name].filter(Boolean).join(" ") || user.email || "User",
     role: profile?.role ?? "viewer",
   };
-}
+});

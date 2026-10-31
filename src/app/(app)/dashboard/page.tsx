@@ -5,12 +5,13 @@ import { TrendChart } from "@/components/trend-chart";
 import { Badge, StatusBadge, Table } from "@/components/ui";
 import { AT_RISK_EHI, bandOf, ehiBands, monthlyAverage } from "@/lib/health";
 import { WO_ACTIVE } from "@/lib/maintenance";
+import { fetchAll } from "@/lib/fetch-all";
 import { loadPlanner } from "@/lib/maintenance-data";
 import { channels } from "@/lib/monitoring";
 import { describe, loadMonitoring, statusByEngine, type MonitorStatus } from "@/lib/monitoring-data";
 import { aircraftStatus, defectSeverity, fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 
 export const metadata = { title: "Executive Dashboard · Hermes" };
 
@@ -44,9 +45,9 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const now = await requestNow();
   const since12m = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1)).toISOString().slice(0, 10);
-  const since30d = new Date(now.getTime() - 30 * 86_400_000).toISOString().slice(0, 10);
+  const since30d = isoDate(new Date(now.getTime() - 30 * 86_400_000));
 
-  const since6m = new Date(now.getTime() - 183 * 86_400_000).toISOString().slice(0, 10);
+  const since6m = isoDate(new Date(now.getTime() - 183 * 86_400_000));
 
   const [engines, aircraft, defects, assessments, flights, oilLimits, monitoring, plan, aogWos] = await Promise.all([
     supabase
@@ -60,11 +61,11 @@ export default async function DashboardPage() {
       .neq("status", "closed")
       .order("reported_at", { ascending: false })
       .returns<DefectRow[]>(),
-    supabase.from("ehi_assessments").select("assessed_at, ehi").gte("assessed_at", since12m),
+    fetchAll<{ assessed_at: string; ehi: number }>((from, to) => supabase.from("ehi_assessments").select("assessed_at, ehi").gte("assessed_at", since12m).order("id").range(from, to)),
     supabase.from("flight_logs").select("flight_hours").gte("flight_date", since30d),
     supabase.from("engines").select("id, oil_limit_qph"),
     loadMonitoring(supabase, { since: since6m }),
-    loadPlanner(supabase, now.toISOString().slice(0, 10)),
+    loadPlanner(supabase, isoDate(now)),
     supabase
       .from("work_orders")
       .select("id, wo_no, title, aircraft(registration)")
@@ -92,7 +93,7 @@ export default async function DashboardPage() {
   const ready = aircraftRows.filter((a) => a.status === "serviceable").length;
   const readyPct = aircraftRows.length ? ((ready / aircraftRows.length) * 100).toFixed(1) : "—";
   const overhaulQueue = engineRows
-    .filter((e) => remaining(e) != null && e.status !== "retired")
+    .filter((e) => remaining(e) != null && (e.status === "installed" || e.status === "spare"))
     .sort((a, b) => remaining(a)! - remaining(b)!);
   const overhaulSoon = overhaulQueue.filter((e) => remaining(e)! <= OVERHAUL_WARN_FH);
 

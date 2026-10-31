@@ -13,7 +13,7 @@ import {
 } from "@/lib/monitoring";
 import { describe, loadMonitoring, statusByEngine, type MonitorStatus } from "@/lib/monitoring-data";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 import { BorescopeForm, ChipCheckForm, OilSampleForm, OilUpliftForm } from "./forms";
 import { BorescopeTable, ChipTable, OilTable, SoapTable } from "./records";
 
@@ -38,10 +38,10 @@ export default async function HealthPage({ searchParams }: PageProps<"/health">)
 
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
   const now = await requestNow();
-  const today = now.toISOString().slice(0, 10);
-  const since = new Date(now.getTime() - 365 * 86_400_000).toISOString().slice(0, 10);
-  const since30d = new Date(now.getTime() - 30 * 86_400_000).toISOString().slice(0, 10);
-  const in30d = new Date(now.getTime() + 30 * 86_400_000).toISOString().slice(0, 10);
+  const today = isoDate(now);
+  const since = isoDate(new Date(now.getTime() - 365 * 86_400_000));
+  const since30d = isoDate(new Date(now.getTime() - 30 * 86_400_000));
+  const in30d = isoDate(new Date(now.getTime() + 30 * 86_400_000));
 
   const [enginesRes, data] = await Promise.all([
     supabase

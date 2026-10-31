@@ -9,7 +9,7 @@ import { channels, monitorLevel } from "@/lib/monitoring";
 import { describe, loadMonitoring, statusByEngine } from "@/lib/monitoring-data";
 import { defectSeverity, defectStatus, engineStatus, fmtHours, fmtInt } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 
 export const metadata = { title: "Engine Report · Hermes" };
 
@@ -48,7 +48,7 @@ export default async function EngineReport({ searchParams }: PageProps<"/reports
   if (!e) notFound();
 
   const now = await requestNow();
-  const today = now.toISOString().slice(0, 10);
+  const today = isoDate(now);
   const [instRes, ehiRes, monitoring, defectsRes, plan, wosRes] = await Promise.all([
     supabase.from("engine_installations").select("*, aircraft(registration)").eq("engine_id", e.id).order("installed_at", { ascending: false }).returns<Installation[]>(),
     supabase.from("ehi_assessments").select("*").eq("engine_id", e.id).order("assessed_at", { ascending: false }).limit(6).returns<(Assessment & { ehi: number })[]>(),

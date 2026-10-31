@@ -8,7 +8,7 @@ import { DUE_SOON_DAYS, dueState, intervalLabel, type DueState } from "@/lib/mai
 import { UTILISATION_DAYS, loadOverhaulForecast, loadPlanner, type PlannedTask } from "@/lib/maintenance-data";
 import { fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { requestNow } from "@/lib/now";
+import { isoDate, requestNow } from "@/lib/now";
 
 export const metadata = { title: "Maintenance Planner · Hermes" };
 
@@ -23,7 +23,7 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
 
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
   const now = await requestNow();
-  const today = now.toISOString().slice(0, 10);
+  const today = isoDate(now);
   const plan = await loadPlanner(supabase, today);
   if (!plan) return <SetupNotice module="Maintenance Planner" file="0006_maintenance.sql" />;
   const overhaul = await loadOverhaulForecast(supabase, plan.rates, today);
