@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarClock, Cog, Download, FileText } from "lucide-react";
+import { ArrowRight, CalendarClock, Cog, Download, FileText, Star } from "lucide-react";
 import { PageHeader, buttonClass } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,7 +27,13 @@ export default async function ReportsPage() {
         description="Printable reports (Print → Save as PDF) and CSV exports for Excel."
       />
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <ReportCard
+          href="/reports/brief"
+          icon={<Star size={20} />}
+          title="Commander Brief"
+          text="One-page readiness brief: bottom line, aircraft status and risk, risks needing a decision, and planned downtime."
+        />
         <ReportCard
           href="/reports/summary"
           icon={<FileText size={20} />}

@@ -71,3 +71,6 @@ export const roleLabels: Record<string, string> = {
   engineer: "Engineer",
   viewer: "Viewer",
 };
+
+export const roleColor = (role: string) =>
+  role === "admin" ? "var(--gold)" : role === "commander" || role === "oc_engineering" ? "var(--accent)" : role === "viewer" ? "var(--muted)" : "var(--success)";

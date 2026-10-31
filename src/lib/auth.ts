@@ -24,6 +24,12 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     .eq("id", user.id)
     .maybeSingle();
 
+  // Deactivated accounts can't read their profile; end the session (route handler clears cookies).
+  if (!profile) {
+    const { data: active, error } = await supabase.rpc("is_active_user");
+    if (!error && active === false) redirect("/logout?reason=inactive");
+  }
+
   return {
     id: user.id,
     name: [profile?.rank, profile?.full_name].filter(Boolean).join(" ") || user.email || "User",

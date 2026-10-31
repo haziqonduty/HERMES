@@ -16,11 +16,19 @@ const INK: Record<string, string> = {
 };
 export const ink = (color?: string) => (color ? (INK[color] ?? color) : undefined);
 
-export function ReportToolbar({ back = "/reports", csv }: { back?: string; csv?: { href: string; label: string }[] }) {
+export function ReportToolbar({
+  back = "/reports",
+  backLabel = "Reports",
+  csv,
+}: {
+  back?: string;
+  backLabel?: string;
+  csv?: { href: string; label: string }[];
+}) {
   return (
     <div className="mx-auto mb-6 flex max-w-[210mm] flex-wrap items-center justify-between gap-3 print:hidden">
       <Link href={back} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground">
-        <ArrowLeft size={14} /> Reports
+        <ArrowLeft size={14} /> {backLabel}
       </Link>
       <div className="flex flex-wrap gap-2">
         {csv?.map((c) => (

@@ -14,6 +14,7 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error?.code === "user_banned") return { error: "This account has been deactivated. Contact your HERMES administrator." };
   if (error) return { error: "Invalid credentials or account not activated." };
 
   redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");

@@ -6,8 +6,10 @@ import { Lock, Mail, ShieldCheck } from "lucide-react";
 import { signIn, type LoginState } from "./actions";
 
 export function LoginForm() {
-  const next = useSearchParams().get("next") ?? "/dashboard";
+  const params = useSearchParams();
+  const next = params.get("next") ?? "/dashboard";
   const [state, action, pending] = useActionState<LoginState, FormData>(signIn, {});
+  const error = state.error ?? (params.get("error") === "inactive" ? "Your account has been deactivated. Contact your HERMES administrator." : undefined);
 
   return (
     <form action={action} className="space-y-5">
@@ -16,9 +18,9 @@ export function LoginForm() {
       <Field icon={<Mail size={16} />} label="Service email" name="email" type="email" autoComplete="email" />
       <Field icon={<Lock size={16} />} label="Password" name="password" type="password" autoComplete="current-password" />
 
-      {state.error && (
+      {error && (
         <p className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {state.error}
+          {error}
         </p>
       )}
 
