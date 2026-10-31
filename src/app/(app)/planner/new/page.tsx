@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui";
 import { loadAssetOptions } from "@/lib/assets";
 import { canEdit, getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 import { TaskForm } from "../forms";
 
 export const metadata = { title: "Add maintenance task · Hermes" };
@@ -29,7 +30,7 @@ export default async function NewTaskPage({ searchParams }: PageProps<"/planner/
               engineId: engines.find((e) => e.serial_number === sp.engine)?.id,
               aircraftId: aircraft.find((a) => a.registration === sp.aircraft)?.id,
             }}
-            today={new Date().toISOString().slice(0, 10)}
+            today={(await requestNow()).toISOString().slice(0, 10)}
           />
         </div>
       ) : (

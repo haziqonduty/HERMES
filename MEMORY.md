@@ -58,6 +58,7 @@ Auto-maintained by Caryn. Read before every session. Newest entries at the top o
 - Vercel: repo imported and both Supabase env vars added (Config type, all environments) on 2026-10-27. Vercel account shows user "HaziqPro00".
 
 ## Mistakes & lessons
+- 2026-10-31 — Dev overlay "Blocking Route: Next.js encountered the unstable value new Date() while prerendering" (user saw it on /dashboard). Awaiting cookies() first is NOT enough in Next 16.4 (runtime prefetch can prerender with cookies). Rule: never `new Date()` / `Date.now()` / `Math.random()` in server components or route handlers — use `await requestNow()` from `lib/now.ts` (calls `connection()` first). `npm run build` does NOT catch this; only the dev overlay does.
 - 2026-10-31 — Repeated mistake: chained several `cat <<'EOF'` + `python - <<'PYEOF'` heredocs in ONE Bash call → bash parse error, nothing ran. Rule: create/overwrite files with the Write tool, edits with Edit; only use short heredocs, one per call.
 - 2026-10-31 — supabase-js `.rpc(...).returns<T[]>()` mistypes set-returning functions ("Cannot cast single object to array type") — cast the data instead.
 - 2026-10-31 — Server components can't sign a user out (cookies are read-only in render): redirect to a route handler (`/logout`) that calls `signOut()` and redirects.

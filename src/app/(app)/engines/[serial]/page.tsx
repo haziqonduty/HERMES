@@ -6,6 +6,7 @@ import { ButtonLink, Stat, StatusBadge, Table } from "@/components/ui";
 import { canEdit, getCurrentUser } from "@/lib/auth";
 import { defectSeverity, defectStatus, engineStatus, fmtHours, fmtInt } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 import { TrendChart } from "@/components/trend-chart";
 import { AT_RISK_EHI, ehiComponents, type Assessment } from "@/lib/health";
 import { AssessmentForm } from "../assessment-form";
@@ -80,7 +81,7 @@ export default async function EnginePassportPage({ params, searchParams }: PageP
   const assessments = assessmentsRes.data ?? [];
   const latest = assessments[0];
   const editable = canEdit(user.role);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (await requestNow()).toISOString().slice(0, 10);
   const monitor = monitoring ? statusByEngine(monitoring, new Map([[e.id, e.oil_limit_qph]])).get(e.id) : undefined;
 
   const current = installs.find((i) => !i.removed_at);

@@ -5,6 +5,7 @@ import { dueState, intervalLabel } from "@/lib/maintenance";
 import { UTILISATION_DAYS, loadOverhaulForecast, loadPlanner } from "@/lib/maintenance-data";
 import { fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 
 export const metadata = { title: "Maintenance Forecast · Hermes" };
 
@@ -12,7 +13,7 @@ const DAYS_AHEAD = 90;
 
 export default async function ForecastReport() {
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
-  const now = new Date();
+  const now = await requestNow();
   const today = now.toISOString().slice(0, 10);
   const plan = await loadPlanner(supabase, today);
   if (!plan) return <SetupNotice module="Maintenance Planner" file="0006_maintenance.sql" />;

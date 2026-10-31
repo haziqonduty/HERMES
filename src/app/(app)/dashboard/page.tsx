@@ -10,6 +10,7 @@ import { channels } from "@/lib/monitoring";
 import { describe, loadMonitoring, statusByEngine, type MonitorStatus } from "@/lib/monitoring-data";
 import { aircraftStatus, defectSeverity, fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 
 export const metadata = { title: "Executive Dashboard · Hermes" };
 
@@ -41,7 +42,7 @@ type Alert = { level: "critical" | "warning" | "info"; title: string; detail: st
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const now = new Date();
+  const now = await requestNow();
   const since12m = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1)).toISOString().slice(0, 10);
   const since30d = new Date(now.getTime() - 30 * 86_400_000).toISOString().slice(0, 10);
 

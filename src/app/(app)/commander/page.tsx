@@ -6,13 +6,14 @@ import { ButtonLink, KpiCard, PageHeader } from "@/components/ui";
 import { OUTLOOK_DAYS, loadReadiness, riskMeta } from "@/lib/readiness";
 import { aircraftStatus } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 import { AircraftCard } from "./aircraft-card";
 
 export const metadata = { title: "Commander View · Hermes" };
 
 export default async function CommanderPage() {
   const supabase = await createClient();
-  const data = await loadReadiness(supabase, new Date());
+  const data = await loadReadiness(supabase, await requestNow());
   if (!data) return <SetupNotice module="Commander View" file="0001_foundation.sql" />;
   const { fleet, board, risks, downtime } = data;
   const pct = fleet.aircraft ? Math.round((fleet.ready / fleet.aircraft) * 100) : 0;

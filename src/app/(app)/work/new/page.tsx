@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui";
 import { loadAssetOptions } from "@/lib/assets";
 import { canEdit, getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 import { WorkOrderForm, type WorkOrderDefaults } from "../forms";
 
 export const metadata = { title: "New work order · Hermes" };
@@ -17,7 +18,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export default async function NewWorkOrderPage({ searchParams }: PageProps<"/work/new">) {
   const sp = (await searchParams) as { task?: string; defect?: string; engine?: string; aircraft?: string };
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (await requestNow()).toISOString().slice(0, 10);
 
   const [{ aircraft, engines }, taskRes, defectRes] = await Promise.all([
     loadAssetOptions(supabase),

@@ -3,12 +3,13 @@ import { getCurrentUser } from "@/lib/auth";
 import { OUTLOOK_DAYS, loadReadiness, riskMeta } from "@/lib/readiness";
 import { aircraftStatus } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 
 export const metadata = { title: "Commander Brief · Hermes" };
 
 export default async function CommanderBrief() {
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
-  const now = new Date();
+  const now = await requestNow();
   const data = await loadReadiness(supabase, now);
   if (!data) return <p className="text-sm text-danger">Readiness data is not available.</p>;
   const { fleet, board, risks, downtime, today } = data;

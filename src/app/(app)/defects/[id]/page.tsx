@@ -6,6 +6,7 @@ import { canEdit, getCurrentUser } from "@/lib/auth";
 import { DEFECT_COLUMNS, ataChapters, daysBetween, type DefectRecord } from "@/lib/defects";
 import { defectSeverity, defectStatus } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 import { DefectUpdateForm } from "../forms";
 import { SetupNotice } from "@/components/setup-notice";
 
@@ -20,7 +21,7 @@ export default async function DefectPage({ params }: PageProps<"/defects/[id]">)
   if (error?.code === "42703") return <SetupNotice />;
   if (!d) notFound();
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (await requestNow()).toISOString().slice(0, 10);
   const age = daysBetween(d.reported_at, d.closed_at ?? today);
   const ata = ataChapters.find((a) => a.code === d.ata_chapter);
   const overdue = d.status === "deferred" && d.deferred_until && d.deferred_until < today;

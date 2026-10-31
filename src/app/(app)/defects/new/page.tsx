@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/ui";
 import { canEdit, getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 import { DefectForm } from "../forms";
 
 export const metadata = { title: "Raise defect · Hermes" };
@@ -44,7 +45,7 @@ export default async function NewDefectPage({ searchParams }: PageProps<"/defect
           aircraft={aircraft}
           engines={engines}
           defaults={{ aircraftId, engineId: engine?.id }}
-          today={new Date().toISOString().slice(0, 10)}
+          today={(await requestNow()).toISOString().slice(0, 10)}
         />
       ) : (
         <p className="panel rounded-2xl p-6 text-sm text-muted">Your role can view defects but not raise them.</p>

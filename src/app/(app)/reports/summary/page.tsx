@@ -7,6 +7,7 @@ import { channels, monitorLevel } from "@/lib/monitoring";
 import { describe, loadMonitoring, statusByEngine } from "@/lib/monitoring-data";
 import { aircraftStatus, defectSeverity, defectStatus, engineStatus, fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 
 export const metadata = { title: "Engineering Summary · Hermes" };
 
@@ -21,7 +22,7 @@ type EngineRow = {
 
 export default async function SummaryReport() {
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
-  const now = new Date();
+  const now = await requestNow();
   const today = now.toISOString().slice(0, 10);
   const since6m = new Date(now.getTime() - 183 * 86_400_000).toISOString().slice(0, 10);
 

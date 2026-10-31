@@ -8,6 +8,7 @@ import { isMissingSchema } from "@/lib/db-errors";
 import { WO_ACTIVE, WO_COLUMNS, fmtQty, isWoOverdue, movementKind, woKind, woPriority, woStatus, type WorkOrder } from "@/lib/maintenance";
 import { defectStatus, fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 import { toggleStep } from "../actions";
 import { AddStepForm, IssuePartForm, WorkOrderUpdateForm, type PartOption } from "../forms";
 
@@ -51,7 +52,7 @@ export default async function WorkOrderPage({ params }: PageProps<"/work/[id]">)
   const steps = stepsRes.data ?? [];
   const moves = movesRes.data ?? [];
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (await requestNow()).toISOString().slice(0, 10);
   const editable = canEdit(user.role);
   const active = WO_ACTIVE.includes(w.status);
   const doneSteps = steps.filter((s) => s.done).length;

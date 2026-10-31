@@ -6,6 +6,7 @@ import { ButtonLink, PageHeader, Stat, StatusBadge, Table } from "@/components/u
 import { canEdit, getCurrentUser } from "@/lib/auth";
 import { aircraftStatus, defectSeverity, defectStatus, fmtHours, fmtInt } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 import { FlightLogForm, InstallForm, RemoveForm } from "../forms";
 
 type Installation = {
@@ -37,7 +38,7 @@ export default async function AircraftPage({ params }: PageProps<"/fleet/[regist
   ]);
 
   const editable = canEdit(user.role);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (await requestNow()).toISOString().slice(0, 10);
   const active = new Map((installs.data ?? []).filter((i) => !i.removed_at).map((i) => [i.position, i]));
   const history = (installs.data ?? []).filter((i) => i.removed_at);
 

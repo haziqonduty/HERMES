@@ -5,6 +5,7 @@ import { Chip, PageHeader, StatusBadge, Table } from "@/components/ui";
 import { ataChapters, daysBetween, removalType } from "@/lib/defects";
 import { fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 import { SetupNotice } from "@/components/setup-notice";
 
 export const metadata = { title: "Reliability Analytics · Hermes" };
@@ -46,7 +47,7 @@ export default async function ReliabilityPage({ searchParams }: PageProps<"/reli
   const period = periods.find((p) => String(p) === sp.period) ?? 12;
   const pareto = (sp.pareto && sp.pareto in paretos ? sp.pareto : "defects") as keyof typeof paretos;
 
-  const now = new Date();
+  const now = await requestNow();
   const months = Array.from({ length: period }, (_, i) => {
     const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (period - 1 - i), 1));
     return { key: d.toISOString().slice(0, 7), label: monthFmt.format(d) };

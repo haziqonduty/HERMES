@@ -1,5 +1,6 @@
 import { intervalLabel } from "@/lib/maintenance";
 import { loadPlanner } from "@/lib/maintenance-data";
+import { requestNow } from "@/lib/now";
 import { createClient } from "@/lib/supabase/server";
 
 type Row = Record<string, unknown>;
@@ -95,7 +96,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/reports/export/[dat
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return new Response("Sign in required", { status: 401 });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (await requestNow()).toISOString().slice(0, 10);
   const rows = await load(supabase, today);
   if (!rows) return new Response("Data not available — has the migration been run?", { status: 503 });
 

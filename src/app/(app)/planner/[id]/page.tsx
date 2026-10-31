@@ -8,6 +8,7 @@ import { dueState, intervalLabel, woStatus } from "@/lib/maintenance";
 import { UTILISATION_DAYS, loadPlanner } from "@/lib/maintenance-data";
 import { fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
+import { requestNow } from "@/lib/now";
 import { TaskForm } from "../forms";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -17,7 +18,7 @@ export default async function TaskPage({ params }: PageProps<"/planner/[id]">) {
   if (!UUID.test(id)) notFound();
 
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = (await requestNow()).toISOString().slice(0, 10);
   const [plan, wos] = await Promise.all([
     loadPlanner(supabase, today, { taskId: id, includeInactive: true }),
     supabase
