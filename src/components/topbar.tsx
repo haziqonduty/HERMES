@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { roleLabels } from "@/lib/nav";
@@ -29,13 +30,15 @@ export function TopbarUserMenu({ name, role }: { name: string; role: string }) {
 
   return (
     <div className="flex items-center gap-4">
-      <div className="hidden text-right leading-tight sm:block">
-        <p className="text-sm">{name}</p>
-        <p className="font-mono text-[10px] tracking-widest text-gold">{(roleLabels[role] ?? role).toUpperCase()}</p>
-      </div>
-      <div className="grid h-9 w-9 place-items-center rounded-full border border-gold/40 bg-surface-2 text-xs font-semibold text-gold-soft">
-        {initials || "?"}
-      </div>
+      <Link href="/account" title="My account" className="group flex items-center gap-4">
+        <div className="hidden text-right leading-tight sm:block">
+          <p className="text-sm group-hover:text-gold-soft">{name}</p>
+          <p className="font-mono text-[10px] tracking-widest text-gold">{(roleLabels[role] ?? role).toUpperCase()}</p>
+        </div>
+        <div className="grid h-9 w-9 place-items-center rounded-full border border-gold/40 bg-surface-2 text-xs font-semibold text-gold-soft transition group-hover:border-gold">
+          {initials || "?"}
+        </div>
+      </Link>
       <form action={signOut}>
         <button
           type="submit"
