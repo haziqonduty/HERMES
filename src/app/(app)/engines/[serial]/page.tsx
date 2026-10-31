@@ -45,6 +45,10 @@ type Defect = {
   closed_at: string | null;
 };
 
+export async function generateMetadata({ params }: PageProps<"/engines/[serial]">) {
+  return { title: `Engine ${decodeURIComponent((await params).serial)}` };
+}
+
 export default async function EnginePassportPage({ params, searchParams }: PageProps<"/engines/[serial]">) {
   const serial = decodeURIComponent((await params).serial);
   const { tab: tabParam } = (await searchParams) as { tab?: string };

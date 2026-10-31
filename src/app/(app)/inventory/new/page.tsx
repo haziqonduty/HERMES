@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui";
 import { canEdit, getCurrentUser } from "@/lib/auth";
 import { PartForm } from "../forms";
 
-export const metadata = { title: "Add store item · Hermes" };
+export const metadata = { title: "Add store item" };
 
 export default async function NewPartPage() {
   const user = await getCurrentUser();

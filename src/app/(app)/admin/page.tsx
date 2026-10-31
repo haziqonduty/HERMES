@@ -10,7 +10,7 @@ import { roleColor, roleLabels } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/server";
 import type { UserProfile } from "./forms";
 
-export const metadata = { title: "Administration · Hermes" };
+export const metadata = { title: "Administration" };
 
 const PAGE_SIZE = 50;
 type ListedUser = UserProfile & { created_at: string; last_sign_in_at: string | null };

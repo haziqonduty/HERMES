@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,8 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hermes — Aircraft Digital Engineering",
+  title: { default: "Hermes — Aircraft Digital Engineering", template: "%s · Hermes" },
   description: "Digital engineering platform for aircraft configuration, maintenance and fleet intelligence.",
+  applicationName: "HERMES",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#040914",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

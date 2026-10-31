@@ -45,7 +45,7 @@ export function OilUpliftForm({ engineId, engines, today, limit }: Target & { li
   return (
     <form action={action} className="space-y-4">
       <EnginePicker engineId={engineId} engines={engines} value={picked} onChange={setPicked} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Serviced" name="serviced_at" type="date" required defaultValue={today} max={today} />
         <Field label="Oil added (qt)" name="quantity_qt" type="number" step="0.1" min={0} required value={qty} onChange={(e) => setQty(e.target.value)} />
         <Field
@@ -79,7 +79,7 @@ export function OilSampleForm({ engineId, engines, today }: Target) {
   return (
     <form action={action} className="space-y-4">
       <EnginePicker engineId={engineId} engines={engines} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Sampled" name="sampled_at" type="date" required defaultValue={today} max={today} />
         <Field label="Lab reference" name="lab_ref" placeholder="Optional" />
       </div>
@@ -113,7 +113,7 @@ export function ChipCheckForm({ engineId, engines, today }: Target) {
   return (
     <form action={action} className="space-y-4">
       <EnginePicker engineId={engineId} engines={engines} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Checked" name="checked_at" type="date" required defaultValue={today} max={today} />
         <SelectField label="Detector" name="location" options={listOptions(chipLocations)} />
       </div>
@@ -130,12 +130,12 @@ export function BorescopeForm({ engineId, engines, today }: Target) {
   return (
     <form action={action} className="space-y-4">
       <EnginePicker engineId={engineId} engines={engines} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Inspected" name="inspected_at" type="date" required defaultValue={today} max={today} />
         <SelectField label="Area" name="area" options={listOptions(borescopeAreas)} />
       </div>
       <TextArea label="Findings" name="findings" required placeholder="e.g. Minor leading-edge erosion on 3 blades, within limits" className="[&_textarea]:min-h-16" />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <SelectField label="Disposition" name="disposition" defaultValue="serviceable" options={toOptions(borescopeDispositions)} />
         <Field label="Next inspection due" name="next_due" type="date" min={today} />
       </div>

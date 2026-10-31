@@ -180,7 +180,7 @@ export default function Home() {
               <span className="text-muted">One platform · One data · One truth</span>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {modules.map((m) => (
               <div
                 key={m.code}

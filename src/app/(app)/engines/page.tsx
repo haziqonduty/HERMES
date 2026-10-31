@@ -7,7 +7,7 @@ import { friendlyError } from "@/lib/db-errors";
 import { engineStatus, fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Engines · Hermes" };
+export const metadata = { title: "Engines" };
 
 const sorts = {
   serial: { label: "Serial", column: "serial_number", ascending: true },

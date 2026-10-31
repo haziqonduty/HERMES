@@ -38,7 +38,7 @@ export function MovementForm({ partId, unit, today }: { partId: string; unit: st
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="part_id" value={partId} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <SelectField label="Movement" name="kind" value={kind} onChange={(e) => setKind(e.target.value)} options={toOptions(movementKind)} />
         <Field label={`Quantity (${unit})`} name="quantity" type="number" step="any" min="0" required />
         {kind === "adjustment" && (

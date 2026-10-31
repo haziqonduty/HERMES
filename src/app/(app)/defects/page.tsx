@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isoDate, requestNow } from "@/lib/now";
 import { SetupNotice } from "@/components/setup-notice";
 
-export const metadata = { title: "Defects · Hermes" };
+export const metadata = { title: "Defects" };
 
 export default async function DefectsPage({ searchParams }: PageProps<"/defects">) {
   const sp = (await searchParams) as { q?: string; status?: string; severity?: string };

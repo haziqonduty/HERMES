@@ -60,7 +60,7 @@ export function FlightLogForm({ aircraftId, today }: { aircraftId: string; today
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="aircraft_id" value={aircraftId} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Date" name="flight_date" type="date" required defaultValue={today} max={today} />
         <Field label="Sortie ref" name="sortie_ref" placeholder="Optional" />
         <Field label="Flight hours" name="flight_hours" type="number" step="0.1" min={0.1} required />

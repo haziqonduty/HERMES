@@ -23,6 +23,8 @@ type Movement = {
   work_orders: { wo_no: string | null; title: string } | null;
 };
 
+export const metadata = { title: "Store item" };
+
 export default async function PartPage({ params }: PageProps<"/inventory/[id]">) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();

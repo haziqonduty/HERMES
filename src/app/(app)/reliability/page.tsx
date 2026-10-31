@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requestNow } from "@/lib/now";
 import { SetupNotice } from "@/components/setup-notice";
 
-export const metadata = { title: "Reliability Analytics · Hermes" };
+export const metadata = { title: "Reliability Analytics" };
 
 const periods = [6, 12, 24] as const;
 const paretos = {

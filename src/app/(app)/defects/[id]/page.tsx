@@ -12,6 +12,8 @@ import { SetupNotice } from "@/components/setup-notice";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export const metadata = { title: "Defect" };
+
 export default async function DefectPage({ params }: PageProps<"/defects/[id]">) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();

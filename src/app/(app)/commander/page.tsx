@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requestNow } from "@/lib/now";
 import { AircraftCard } from "./aircraft-card";
 
-export const metadata = { title: "Commander View · Hermes" };
+export const metadata = { title: "Commander View" };
 
 export default async function CommanderPage() {
   const supabase = await createClient();

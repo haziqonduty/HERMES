@@ -3,7 +3,7 @@ import { ArrowRight, CalendarClock, Cog, Download, FileText, Star } from "lucide
 import { PageHeader, buttonClass } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Reports · Hermes" };
+export const metadata = { title: "Reports" };
 
 const exports = [
   { key: "engines", label: "Engines", hint: "Life, status, EHI" },

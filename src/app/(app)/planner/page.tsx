@@ -10,7 +10,7 @@ import { fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 import { isoDate, requestNow } from "@/lib/now";
 
-export const metadata = { title: "Maintenance Planner · Hermes" };
+export const metadata = { title: "Maintenance Planner" };
 
 const tabKeys = ["programme", "calendar", "overhaul"] as const;
 const MONTHS_AHEAD = 12;

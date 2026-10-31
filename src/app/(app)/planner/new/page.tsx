@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isoDate, requestNow } from "@/lib/now";
 import { TaskForm } from "../forms";
 
-export const metadata = { title: "Add maintenance task · Hermes" };
+export const metadata = { title: "Add maintenance task" };
 
 /** Prefill with ?engine=<serial> or ?aircraft=<registration>. */
 export default async function NewTaskPage({ searchParams }: PageProps<"/planner/new">) {

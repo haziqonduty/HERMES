@@ -13,7 +13,7 @@ import { aircraftStatus, defectSeverity, fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 import { isoDate, requestNow } from "@/lib/now";
 
-export const metadata = { title: "Executive Dashboard · Hermes" };
+export const metadata = { title: "Executive Dashboard" };
 
 const OVERHAUL_WARN_FH = 200;
 

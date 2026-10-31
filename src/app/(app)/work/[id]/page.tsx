@@ -31,6 +31,8 @@ type Movement = {
   parts: { id: string; part_number: string; description: string; unit: string } | null;
 };
 
+export const metadata = { title: "Work order" };
+
 export default async function WorkOrderPage({ params }: PageProps<"/work/[id]">) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();

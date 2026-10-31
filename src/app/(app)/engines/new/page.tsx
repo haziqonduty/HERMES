@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/ui";
 import { EngineForm } from "../engine-form";
 
-export const metadata = { title: "New engine · Hermes" };
+export const metadata = { title: "New engine" };
 
 export default function NewEnginePage() {
   return (

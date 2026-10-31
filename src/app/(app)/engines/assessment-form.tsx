@@ -23,7 +23,7 @@ export function AssessmentForm({ engineId, today, latest }: { engineId: string; 
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="engine_id" value={engineId} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Date" name="assessed_at" type="date" required defaultValue={today} max={today} />
         <SelectField label="Source" name="source" options={sources.map((s) => ({ value: s, label: s }))} />
       </div>

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isoDate, requestNow } from "@/lib/now";
 import { DefectForm } from "../forms";
 
-export const metadata = { title: "Raise defect · Hermes" };
+export const metadata = { title: "Raise defect" };
 
 type EngineRow = { id: string; serial_number: string; engine_installations: { aircraft_id: string; removed_at: string | null }[] };
 

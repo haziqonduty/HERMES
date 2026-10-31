@@ -17,7 +17,7 @@ import { isoDate, requestNow } from "@/lib/now";
 import { BorescopeForm, ChipCheckForm, OilSampleForm, OilUpliftForm } from "./forms";
 import { BorescopeTable, ChipTable, OilTable, SoapTable } from "./records";
 
-export const metadata = { title: "Health Monitoring · Hermes" };
+export const metadata = { title: "Health Monitoring" };
 
 const tabs = [{ key: "overview", label: "Overview" }, ...channels] as const;
 

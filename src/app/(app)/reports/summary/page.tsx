@@ -9,7 +9,7 @@ import { aircraftStatus, defectSeverity, defectStatus, engineStatus, fmtHours } 
 import { createClient } from "@/lib/supabase/server";
 import { isoDate, requestNow } from "@/lib/now";
 
-export const metadata = { title: "Engineering Summary · Hermes" };
+export const metadata = { title: "Engineering Summary" };
 
 type EngineRow = {
   id: string;

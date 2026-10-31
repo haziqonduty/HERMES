@@ -18,6 +18,10 @@ type Installation = {
   engines: { id: string; serial_number: string; model: string; ehi: number | null; tso: number | null; overhaul_interval_hours: number | null } | null;
 };
 
+export async function generateMetadata({ params }: PageProps<"/fleet/[registration]">) {
+  return { title: `Aircraft ${decodeURIComponent((await params).registration)}` };
+}
+
 export default async function AircraftPage({ params }: PageProps<"/fleet/[registration]">) {
   const registration = decodeURIComponent((await params).registration);
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);

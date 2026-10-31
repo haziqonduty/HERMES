@@ -6,7 +6,7 @@ import { roleColor, roleLabels } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/server";
 import { ChangePasswordForm, MyProfileForm } from "./forms";
 
-export const metadata = { title: "My account · Hermes" };
+export const metadata = { title: "My account" };
 
 export default async function AccountPage() {
   const [me, supabase] = await Promise.all([getCurrentUser(), createClient()]);

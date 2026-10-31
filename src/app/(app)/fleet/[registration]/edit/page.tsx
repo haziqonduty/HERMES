@@ -3,6 +3,10 @@ import { PageHeader } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { AircraftForm } from "../../forms";
 
+export async function generateMetadata({ params }: PageProps<"/fleet/[registration]/edit">) {
+  return { title: `Edit aircraft ${decodeURIComponent((await params).registration)}` };
+}
+
 export default async function EditAircraftPage({ params }: PageProps<"/fleet/[registration]/edit">) {
   const registration = decodeURIComponent((await params).registration);
   const supabase = await createClient();

@@ -7,7 +7,7 @@ import { fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 import { isoDate, requestNow } from "@/lib/now";
 
-export const metadata = { title: "Maintenance Forecast · Hermes" };
+export const metadata = { title: "Maintenance Forecast" };
 
 const DAYS_AHEAD = 90;
 

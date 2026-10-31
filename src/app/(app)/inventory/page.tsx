@@ -9,7 +9,7 @@ import { engineStatus, fmtHours } from "@/lib/status";
 import { loadParts } from "@/lib/maintenance-data";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Inventory · Hermes" };
+export const metadata = { title: "Inventory" };
 
 const tabKeys = ["parts", "engines", "movements"] as const;
 

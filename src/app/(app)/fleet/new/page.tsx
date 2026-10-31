@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/ui";
 import { AircraftForm } from "../forms";
 
-export const metadata = { title: "Add aircraft · Hermes" };
+export const metadata = { title: "Add aircraft" };
 
 export default function NewAircraftPage() {
   return (

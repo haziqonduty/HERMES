@@ -95,7 +95,7 @@ export function DefectUpdateForm({
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="id" value={defect.id} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <SelectField label="Status" name="status" value={status} onChange={(e) => setStatus(e.target.value)} options={toOptions(defectStatus)} />
         <SelectField label="Severity" name="severity" defaultValue={defect.severity} options={toOptions(defectSeverity)} />
       </div>

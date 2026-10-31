@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { CreateUserForm } from "../../forms";
 
-export const metadata = { title: "Add user · Hermes" };
+export const metadata = { title: "Add user" };
 
 export default async function NewUserPage() {
   const user = await getCurrentUser();

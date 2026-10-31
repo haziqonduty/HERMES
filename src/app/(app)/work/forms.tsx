@@ -109,7 +109,7 @@ export function WorkOrderUpdateForm({
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="id" value={wo.id} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <SelectField label="Status" name="status" value={status} onChange={(e) => setStatus(e.target.value)} options={toOptions(woStatus)} />
         <SelectField label="Priority" name="priority" defaultValue={wo.priority} options={toOptions(woPriority)} />
         <Field label="Due date" name="due_date" type="date" defaultValue={wo.due_date ?? ""} />
@@ -172,7 +172,7 @@ export function IssuePartForm({ workOrderId, woNo, parts }: { workOrderId: strin
           ...parts.map((p) => ({ value: p.id, label: `${p.part_number} — ${p.description} (${fmtQty(p.quantity)} ${p.unit} · ${p.location})` })),
         ]}
       />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Quantity" name="quantity" type="number" step="any" min="0" required />
         <SelectField label="Movement" name="kind" options={[{ value: "issue", label: "Issue to WO" }, { value: "return", label: "Return to store" }]} />
       </div>

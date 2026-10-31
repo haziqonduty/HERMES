@@ -5,7 +5,7 @@ import { aircraftStatus } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 import { requestNow } from "@/lib/now";
 
-export const metadata = { title: "Commander Brief · Hermes" };
+export const metadata = { title: "Commander Brief" };
 
 export default async function CommanderBrief() {
   const [user, supabase] = await Promise.all([getCurrentUser(), createClient()]);

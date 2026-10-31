@@ -13,6 +13,8 @@ import { TaskForm } from "../forms";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export const metadata = { title: "Maintenance task" };
+
 export default async function TaskPage({ params }: PageProps<"/planner/[id]">) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();

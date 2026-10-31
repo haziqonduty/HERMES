@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isoDate, requestNow } from "@/lib/now";
 import { WorkOrderForm, type WorkOrderDefaults } from "../forms";
 
-export const metadata = { title: "New work order · Hermes" };
+export const metadata = { title: "New work order" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

@@ -11,7 +11,7 @@ import { defectSeverity, defectStatus, engineStatus, fmtHours, fmtInt } from "@/
 import { createClient } from "@/lib/supabase/server";
 import { isoDate, requestNow } from "@/lib/now";
 
-export const metadata = { title: "Engine Report · Hermes" };
+export const metadata = { title: "Engine Report" };
 
 type Engine = {
   id: string;

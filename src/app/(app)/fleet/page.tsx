@@ -7,7 +7,7 @@ import { friendlyError } from "@/lib/db-errors";
 import { aircraftStatus, fmtHours, fmtInt } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Fleet Overview · Hermes" };
+export const metadata = { title: "Fleet Overview" };
 
 type Row = {
   id: string;

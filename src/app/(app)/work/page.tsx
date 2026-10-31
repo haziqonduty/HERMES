@@ -9,7 +9,7 @@ import { fmtHours } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 import { isoDate, requestNow } from "@/lib/now";
 
-export const metadata = { title: "Work Management · Hermes" };
+export const metadata = { title: "Work Management" };
 
 export default async function WorkPage({ searchParams }: PageProps<"/work">) {
   const sp = (await searchParams) as { q?: string; status?: string; priority?: string };

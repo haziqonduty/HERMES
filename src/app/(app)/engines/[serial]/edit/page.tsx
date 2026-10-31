@@ -6,6 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { EngineForm } from "../../engine-form";
 import { EngineStatusForm } from "../../status-form";
 
+export async function generateMetadata({ params }: PageProps<"/engines/[serial]/edit">) {
+  return { title: `Edit engine ${decodeURIComponent((await params).serial)}` };
+}
+
 export default async function EditEnginePage({ params }: PageProps<"/engines/[serial]/edit">) {
   const serial = decodeURIComponent((await params).serial);
   const supabase = await createClient();

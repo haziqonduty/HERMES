@@ -14,6 +14,8 @@ import { ResetPasswordForm, UserEditForm, type UserProfile } from "../../forms";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type ListedUser = UserProfile & { created_at: string; last_sign_in_at: string | null };
 
+export const metadata = { title: "User" };
+
 export default async function UserPage({ params }: PageProps<"/admin/users/[id]">) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();
