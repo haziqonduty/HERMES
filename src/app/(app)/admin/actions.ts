@@ -54,3 +54,31 @@ export async function resetPassword(_prev: FormState, fd: FormData): Promise<For
   if (error) return { error: friendlyError(error) };
   return { ok: "Password changed. Give it to the user securely and ask them to change it." };
 }
+
+/** Sets the oil consumption limit and/or overhaul interval on every engine of one model. */
+export async function setModelLimits(_prev: FormState, fd: FormData): Promise<FormState> {
+  const model = str(fd, "model");
+  const oil = str(fd, "oil_limit_qph");
+  const tbo = str(fd, "overhaul_interval_hours");
+  const patch: Record<string, number | null> = {};
+  if (fd.get("oil_default") === "on") patch.oil_limit_qph = null;
+  else if (oil) {
+    const n = Number(oil);
+    if (!(n > 0 && n < 1000)) return { error: "Oil limit must be a number above 0 (qt/FH)." };
+    patch.oil_limit_qph = n;
+  }
+  if (tbo) {
+    const n = Number(tbo);
+    if (!(n > 0)) return { error: "Overhaul interval must be a number of flight hours above 0." };
+    patch.overhaul_interval_hours = n;
+  }
+  if (!model) return { error: "No engine model given." };
+  if (Object.keys(patch).length === 0) return { error: "Enter a new oil limit or overhaul interval." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("engines").update(patch).eq("model", model).select("id");
+  if (error) return { error: friendlyError(error) };
+  if (!data?.length) return { error: "Your role does not have permission to do this." };
+  refresh();
+  return { ok: `Updated ${data.length} ${model} engine${data.length === 1 ? "" : "s"}.` };
+}

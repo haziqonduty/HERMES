@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, CircleDashed, Plus, ShieldCheck } from "lucide-react";
+import { CheckCircle2, CircleDashed, Plus, ShieldCheck, Upload } from "lucide-react";
 import { AuditTable } from "@/components/audit-table";
 import { SetupNotice } from "@/components/setup-notice";
 import { Badge, ButtonLink, KpiCard, PageHeader, Table, Tabs, buttonClass } from "@/components/ui";
@@ -8,7 +8,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { friendlyError, isMissingSchema } from "@/lib/db-errors";
 import { roleColor, roleLabels } from "@/lib/nav";
 import { createClient } from "@/lib/supabase/server";
-import type { UserProfile } from "./forms";
+import { ModelLimitsForm, type UserProfile } from "./forms";
+import { fetchAll } from "@/lib/fetch-all";
+import { DEFAULT_OIL_LIMIT_QPH } from "@/lib/monitoring";
 
 export const metadata = { title: "Administration" };
 
@@ -29,10 +31,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       </div>
     );
 
-  const tab = sp.tab === "audit" || !isAdmin ? "audit" : sp.tab === "system" ? "system" : "users";
+  const tab = sp.tab === "audit" || !isAdmin ? "audit" : sp.tab === "system" || sp.tab === "limits" ? sp.tab : "users";
   const tabs = [
     ...(isAdmin ? [{ key: "users", label: "Users & roles", href: "/admin" }] : []),
     { key: "audit", label: "Audit trail", href: "/admin?tab=audit" },
+    ...(isAdmin ? [{ key: "limits", label: "Engine limits", href: "/admin?tab=limits" }] : []),
     ...(isAdmin ? [{ key: "system", label: "System status", href: "/admin?tab=system" }] : []),
   ];
 
@@ -41,19 +44,24 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       <PageHeader
         eyebrow="HERMES · System"
         title="Administration"
-        description="User accounts and roles, the audit trail of every change, and system status."
+        description="User accounts and roles, the audit trail of every change, engine limits, data import and system status."
         actions={
           isAdmin &&
-          tab === "users" && (
+          (tab === "users" ? (
             <ButtonLink href="/admin/users/new" variant="primary">
               <Plus size={16} /> Add user
             </ButtonLink>
-          )
+          ) : tab === "system" ? (
+            <ButtonLink href="/admin/import" variant="primary">
+              <Upload size={16} /> Import fleet data
+            </ButtonLink>
+          ) : null)
         }
       />
       <Tabs active={tab} tabs={tabs} />
       {tab === "users" && <Users />}
       {tab === "audit" && <Audit sp={sp} />}
+      {tab === "limits" && <EngineLimits />}
       {tab === "system" && <System />}
     </div>
   );
@@ -292,10 +300,61 @@ async function System() {
           <p className="label">Environment</p>
           <dl className="mt-4 space-y-2">
             <div className="flex justify-between gap-4"><dt className="text-muted">Supabase project</dt><dd className="truncate font-mono text-xs">{host}</dd></div>
-            <div className="flex justify-between gap-4"><dt className="text-muted">HERMES version</dt><dd className="font-mono text-xs">v0.7.3</dd></div>
+            <div className="flex justify-between gap-4"><dt className="text-muted">HERMES version</dt><dd className="font-mono text-xs">v0.8</dd></div>
           </dl>
         </section>
       </div>
+    </div>
+  );
+}
+
+/** Oil consumption limit and overhaul interval per engine model — set from the engine manual before go-live. */
+async function EngineLimits() {
+  const supabase = await createClient();
+  const { data, error } = await fetchAll<{ model: string; status: string; oil_limit_qph: number | null; overhaul_interval_hours: number | null }>((from, to) =>
+    supabase.from("engines").select("model, status, oil_limit_qph, overhaul_interval_hours, id").order("model").order("id").range(from, to),
+  );
+  if (error) return <p className="text-sm text-danger">{friendlyError(error)}</p>;
+
+  const models = new Map<string, { count: number; oil: Map<string, number>; tbo: Map<string, number> }>();
+  for (const e of data ?? []) {
+    const m = models.get(e.model) ?? { count: 0, oil: new Map(), tbo: new Map() };
+    const oil = e.oil_limit_qph === null ? `app default ${DEFAULT_OIL_LIMIT_QPH} qt/FH` : `${Number(e.oil_limit_qph)} qt/FH`;
+    const tbo = e.overhaul_interval_hours === null ? "not set" : `${Number(e.overhaul_interval_hours).toLocaleString("en-GB")} FH`;
+    m.count++;
+    m.oil.set(oil, (m.oil.get(oil) ?? 0) + 1);
+    m.tbo.set(tbo, (m.tbo.get(tbo) ?? 0) + 1);
+    models.set(e.model, m);
+  }
+  const summary = (values: Map<string, number>, count: number) =>
+    [...values].map(([v, n]) => (values.size === 1 ? v : `${v} (${n} of ${count})`)).join(", ");
+
+  return (
+    <div className="space-y-4">
+      <div className="panel rounded-2xl border-l-2 !border-l-warning p-5 text-sm">
+        <p className="font-medium text-warning">Use the limits from the engine manual</p>
+        <p className="mt-1 text-muted">
+          Engines without an oil limit use the app default of {DEFAULT_OIL_LIMIT_QPH} qt/FH, which is a placeholder, not an approved
+          figure. Health Monitoring flags caution above 80% of the limit and alert above it. Single engines can still be set on their
+          own Edit page.
+        </p>
+      </div>
+      {models.size === 0 && <p className="panel rounded-2xl p-6 text-sm text-muted">No engines yet. Import or add engines first.</p>}
+      {[...models].map(([model, m]) => (
+        <section key={model} className="panel rounded-2xl p-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-mono text-lg text-gold-soft">{model}</h2>
+            <span className="text-xs text-muted">{m.count} engine{m.count === 1 ? "" : "s"}</span>
+          </div>
+          <dl className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
+            <div><dt className="label inline">Oil limit</dt> <dd className="inline font-mono">{summary(m.oil, m.count)}</dd></div>
+            <div><dt className="label inline">Overhaul interval</dt> <dd className="inline font-mono">{summary(m.tbo, m.count)}</dd></div>
+          </dl>
+          <div className="mt-4 border-t border-border pt-4">
+            <ModelLimitsForm model={model} />
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

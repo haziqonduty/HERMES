@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { Field, FormMessage, SelectField, SubmitButton, type FormState } from "@/components/form";
 import { roleLabels } from "@/lib/nav";
-import { createUser, resetPassword, updateUser } from "./actions";
+import { createUser, resetPassword, setModelLimits, updateUser } from "./actions";
 
 const roleOptions = Object.entries(roleLabels).map(([value, label]) => ({ value, label }));
 
@@ -71,6 +71,23 @@ export function ResetPasswordForm({ id }: { id: string }) {
       <Field label="Confirm" name="confirm" type="password" required minLength={10} autoComplete="new-password" />
       <FormMessage state={state} />
       <SubmitButton variant="secondary" pendingText="Changing…">Set password</SubmitButton>
+    </form>
+  );
+}
+
+export function ModelLimitsForm({ model }: { model: string }) {
+  const [state, action] = useActionState<FormState, FormData>(setModelLimits, {});
+  return (
+    <form action={action} className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
+      <input type="hidden" name="model" value={model} />
+      <Field label="Oil limit (qt/FH)" name="oil_limit_qph" type="number" step="0.01" min="0.01" placeholder="Unchanged" />
+      <Field label="Overhaul interval (FH)" name="overhaul_interval_hours" type="number" step="1" min="1" placeholder="Unchanged" />
+      <SubmitButton>Apply to all</SubmitButton>
+      <label className="flex items-center gap-2 text-xs text-muted sm:col-span-3">
+        <input type="checkbox" name="oil_default" className="accent-[var(--gold)]" />
+        Clear the oil limit (use the app default instead)
+      </label>
+      <div className="sm:col-span-3"><FormMessage state={state} /></div>
     </form>
   );
 }
