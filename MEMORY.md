@@ -45,7 +45,7 @@ Auto-maintained by Caryn. Read before every session. Newest entries at the top o
 ## Open items
 - Database schema: ask user what Hermes must track (aircraft, maintenance, documents, users…).
 - Supabase: `0001_foundation.sql` + `seed.sql` run and admin user created — confirmed by user 2026-10-27. Migrations are applied by the USER pasting into SQL Editor (I have no DB access); always tell them which new file to run.
-- Vercel live URL still not recorded.
+- Vercel live URL: https://hermes-weld-one.vercel.app (production, deploys from main). Recorded 2026-10-31.
 - Fleet scope: user said don't fix to one fleet (2026-10-27) — keep aircraft/engine types generic.
 - `0002`–`0005` migrations + seeds 0003/0004/0005 run by user — confirmed 2026-10-27. All step 1–5 features are now live in the DB.
 - Step 2 pages not yet verified logged-in by user (I can't sign in).
@@ -53,9 +53,9 @@ Auto-maintained by Caryn. Read before every session. Newest entries at the top o
 - `0006_maintenance.sql` + `seed_0006_maintenance.sql` run by user — confirmed 2026-10-31. Step 6 live in DB.
 - Print/PDF output of reports not yet eyeballed (no PDF renderer locally) — ask user to check one printed report.
 - `0007_administration.sql` run by user — confirmed 2026-10-31.
-- User must run `0008_my_account.sql` (pushed 2026-10-31). Not yet confirmed. Before it, password change works but saving the profile shows 'ask your administrator to run 0008'.
+- `0008_my_account.sql` run by user — confirmed 2026-10-31. All migrations 0001–0008 applied.
 - Next: MVP build plan (steps 1–7) complete + My Account. Possible follow-ups: user self-service profile/password change, real oil limits, Vercel URL, user acceptance with No. 20 Sqn, then Y2 roadmap (AI/RUL).
-- Vercel: repo imported and both Supabase env vars added (Config type, all environments) on 2026-10-27. Live URL not yet recorded — ask user.
+- Vercel: repo imported and both Supabase env vars added (Config type, all environments) on 2026-10-27. Vercel account shows user "HaziqPro00".
 
 ## Mistakes & lessons
 - 2026-10-31 — Repeated mistake: chained several `cat <<'EOF'` + `python - <<'PYEOF'` heredocs in ONE Bash call → bash parse error, nothing ran. Rule: create/overwrite files with the Write tool, edits with Edit; only use short heredocs, one per call.
