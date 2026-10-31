@@ -36,7 +36,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-border px-5 py-4 font-mono text-[10px] tracking-widest text-muted">
-        v0.7 · HERMES-E MVP
+        v0.7.3 · HERMES-E MVP
       </div>
     </aside>
   );

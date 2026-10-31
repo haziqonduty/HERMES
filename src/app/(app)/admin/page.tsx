@@ -134,7 +134,9 @@ async function Audit({ sp }: { sp: { table?: string; action?: string; user?: str
   const from = date(sp.from);
   const to = date(sp.to);
 
-  let query = supabase.from("audit_log").select("*", { count: "exact" }).order("at", { ascending: false });
+  // "estimated" is exact for small results and a planner estimate for large ones, so
+  // big trails don't pay for a full count on every page. Paging uses one extra row instead.
+  let query = supabase.from("audit_log").select("*", { count: "estimated" }).order("at", { ascending: false }).order("id", { ascending: false });
   if (table) query = query.eq("table_name", table);
   if (action) query = query.eq("action", action);
   if (actor) query = query.eq("actor", actor);
@@ -143,14 +145,17 @@ async function Audit({ sp }: { sp: { table?: string; action?: string; user?: str
   if (to) query = query.lte("at", `${to}T23:59:59.999+08:00`);
 
   const [res, profiles] = await Promise.all([
-    query.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1).returns<AuditRow[]>(),
+    query.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE).returns<AuditRow[]>(),
     supabase.from("profiles").select("id, full_name, rank").order("full_name"),
   ]);
   if (res.error) return <p className="text-sm text-danger">{friendlyError(res.error)}</p>;
 
   const actors = new Map((profiles.data ?? []).map((p) => [p.id as string, [p.rank, p.full_name].filter(Boolean).join(" ") || "(no name)"]));
-  const total = res.count ?? 0;
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const rows = (res.data ?? []).slice(0, PAGE_SIZE);
+  const hasOlder = (res.data?.length ?? 0) > PAGE_SIZE;
+  const total = Math.max(res.count ?? 0, (page - 1) * PAGE_SIZE + rows.length);
+  const approx = total > 1000;
+  const pages = Math.max(page, Math.ceil(total / PAGE_SIZE));
   const pageHref = (n: number) => {
     const p = new URLSearchParams({ tab: "audit", ...(table && { table }), ...(action && { action }), ...(actor && { user: actor }), ...(from && { from }), ...(to && { to }), page: String(n) });
     return `/admin?${p}`;
@@ -203,14 +208,14 @@ async function Audit({ sp }: { sp: { table?: string; action?: string; user?: str
       </form>
 
       <div className="panel overflow-hidden rounded-2xl">
-        <AuditTable rows={res.data ?? []} actors={actors} />
+        <AuditTable rows={rows} actors={actors} />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 font-mono text-xs text-muted">
-        <span>{total.toLocaleString("en-GB")} entr{total === 1 ? "y" : "ies"} · page {page} of {pages}</span>
+        <span>{approx && "about "}{total.toLocaleString("en-GB")} entr{total === 1 ? "y" : "ies"} · page {page} of {approx && "about "}{pages}</span>
         <div className="flex gap-2">
           {page > 1 && <Link href={pageHref(page - 1)} className={buttonClass()}>← Newer</Link>}
-          {page < pages && <Link href={pageHref(page + 1)} className={buttonClass()}>Older →</Link>}
+          {hasOlder && <Link href={pageHref(page + 1)} className={buttonClass()}>Older →</Link>}
         </div>
       </div>
     </>
@@ -221,8 +226,15 @@ async function Audit({ sp }: { sp: { table?: string; action?: string; user?: str
 async function System() {
   const supabase = await createClient();
   const probe = async (table: string, column = "*") => {
-    const { count, error } = await supabase.from(table).select(column, { count: "exact", head: true });
+    const { count, error } = await supabase.from(table).select(column, { count: "estimated", head: true });
     return { ok: !error, count: count ?? 0 };
+  };
+  // 0008/0009 add no table or column to probe; 0010 adds a function that reads the catalog.
+  const checks = supabase.rpc("hermes_schema_checks").then(({ data }) => data as Record<string, boolean> | null);
+  // Before 0010 the function is missing, so 0008/0009 are unknown rather than "not applied".
+  const schema = async (key: string): Promise<{ ok: boolean | null; count: number }> => {
+    const c = await checks;
+    return { ok: c ? (c[key] ?? false) : key === "0010" ? false : null, count: 0 };
   };
   const modules = [
     { file: "0001_foundation.sql", name: "Foundation — users, aircraft, engines, defects, audit", check: probe("engines") },
@@ -232,6 +244,9 @@ async function System() {
     { file: "0005_defects_reliability.sql", name: "Defects & reliability", check: probe("defects", "defect_no") },
     { file: "0006_maintenance.sql", name: "Maintenance — planner, work orders, inventory", check: probe("work_orders") },
     { file: "0007_administration.sql", name: "Administration — user status, admin functions", check: probe("profiles", "active") },
+    { file: "0008_my_account.sql", name: "My Account — self-service profile", check: schema("0008") },
+    { file: "0009_fixes.sql", name: "Fixes — Malaysia time, engine status guard, flight log correction", check: schema("0009") },
+    { file: "0010_polish.sql", name: "Polish — work order reopen, audit indexes", check: schema("0010") },
   ];
   const results = await Promise.all(modules.map((m) => m.check));
   const counts = await Promise.all(
@@ -249,12 +264,14 @@ async function System() {
         <ul className="mt-4 divide-y divide-border border-t border-border">
           {modules.map((m, i) => (
             <li key={m.file} className="flex items-center gap-4 px-6 py-3 text-sm">
-              {results[i].ok ? <CheckCircle2 size={18} className="shrink-0 text-success" /> : <CircleDashed size={18} className="shrink-0 text-warning" />}
+              {results[i].ok ? <CheckCircle2 size={18} className="shrink-0 text-success" /> : <CircleDashed size={18} className={`shrink-0 ${results[i].ok === null ? "text-muted" : "text-warning"}`} />}
               <span className="min-w-0 flex-1">
                 {m.name}
                 <span className="block font-mono text-xs text-muted">supabase/migrations/{m.file}</span>
               </span>
-              <span className={`whitespace-nowrap text-xs ${results[i].ok ? "text-success" : "text-warning"}`}>{results[i].ok ? "Applied" : "Not applied"}</span>
+              <span className={`whitespace-nowrap text-xs ${results[i].ok ? "text-success" : results[i].ok === null ? "text-muted" : "text-warning"}`}>
+                {results[i].ok ? "Applied" : results[i].ok === null ? "Check after 0010" : "Not applied"}
+              </span>
             </li>
           ))}
         </ul>
@@ -275,7 +292,7 @@ async function System() {
           <p className="label">Environment</p>
           <dl className="mt-4 space-y-2">
             <div className="flex justify-between gap-4"><dt className="text-muted">Supabase project</dt><dd className="truncate font-mono text-xs">{host}</dd></div>
-            <div className="flex justify-between gap-4"><dt className="text-muted">HERMES version</dt><dd className="font-mono text-xs">v0.7</dd></div>
+            <div className="flex justify-between gap-4"><dt className="text-muted">HERMES version</dt><dd className="font-mono text-xs">v0.7.3</dd></div>
           </dl>
         </section>
       </div>

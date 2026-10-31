@@ -95,10 +95,12 @@ export function WorkOrderForm({
 
 export function WorkOrderUpdateForm({
   wo,
+  hasTask,
   hasDefect,
   defectOpen,
 }: {
   wo: { id: string; status: string; priority: string; due_date: string | null; assigned_to: string | null; actual_hours: number | null; completion_notes: string | null };
+  hasTask: boolean;
   hasDefect: boolean;
   defectOpen: boolean;
 }) {
@@ -128,6 +130,12 @@ export function WorkOrderUpdateForm({
           <input type="checkbox" name="close_defect" defaultChecked className="accent-[var(--gold)]" />
           Also close the linked defect with this action
         </label>
+      )}
+      {hasTask && wo.status === "completed" && status !== "completed" && (
+        <p className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
+          Reopening undoes the compliance this work order recorded on its maintenance task — the task goes back to
+          its previous &ldquo;last done&rdquo;.
+        </p>
       )}
       <FormMessage state={state} />
       <SubmitButton variant={status === "completed" ? "primary" : "secondary"}>

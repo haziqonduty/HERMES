@@ -185,7 +185,7 @@ export default async function WorkOrderPage({ params }: PageProps<"/work/[id]">)
           <div className="space-y-6">
             <section className="panel h-fit rounded-2xl p-6">
               <p className="label mb-5">Update work order</p>
-              <WorkOrderUpdateForm wo={w} hasDefect={!!w.defect_id} defectOpen={!!w.defects && w.defects.status !== "closed"} />
+              <WorkOrderUpdateForm wo={w} hasTask={!!w.task_id} hasDefect={!!w.defect_id} defectOpen={!!w.defects && w.defects.status !== "closed"} />
             </section>
             {active && (
               <section className="panel h-fit rounded-2xl p-6">
